@@ -7,7 +7,7 @@ exports.authenticate = (req, res, next) => {
     }
     var authHeader = req.headers.authorization;
     if (!authHeader) {
-        return res.status(401).json({ message: 'Bad Request' });
+        return res.status(401).json({ message: 'Missing Authorization Header' });
     }
   
     const auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
