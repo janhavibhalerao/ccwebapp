@@ -2,8 +2,8 @@ const express = require('express');
 const path = require('path');
 const logger = require('morgan');
 
-let authenticate = require('./services/auth');
-let usersRouter = require('./routes/user');
+const auth = require('./services/auth');
+const usersRouter = require('./routes/user');
 
 let app = express();
 
@@ -11,7 +11,6 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use(authenticate);
 app.use('/v1/user', usersRouter);
 
 
