@@ -7,8 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
@@ -17,10 +17,10 @@
     "body-parser": "^1.19.0",
     "email-validator": "^2.0.4",
     "express": "^4.17.1",
+    "moment": "^2.24.0",
     "mysql": "^2.17.1",
-    "password-validator": "^5.0.2"
-  },
-  "devDependencies": {
-    "nodemon": "^1.19.2"
+    "password-validator": "^5.0.2",
+    "uuid": "^3.3.3",
+    "uuidv4": "^5.0.1"
   }
 }
