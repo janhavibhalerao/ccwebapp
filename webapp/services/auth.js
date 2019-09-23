@@ -1,15 +1,11 @@
 const mysql = require('../services/db');
 const bcrypt = require('bcrypt');
 
-
+// To authenticate User (Basic Auth)
 exports.authenticate = (req, res, next) => {
-
     let contentType = req.headers['content-type'];
-
     if (contentType == 'application/json') {
-
         let authHeader = req.headers.authorization;
-
         if (!authHeader) {
             return res.status(401).json({ message: 'Unauthorized' });
         }

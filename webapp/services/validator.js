@@ -1,6 +1,6 @@
 const validator = require('password-validator');
 
-var schema = new validator();
+let schema = new validator();
 
 schema.is().min(8);
 schema.is().max(20);
