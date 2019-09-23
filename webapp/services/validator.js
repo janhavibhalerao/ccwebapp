@@ -1,12 +1,14 @@
+const validator = require('password-validator');
 
-const myDb = require('./db');
+var schema = new validator();
 
-exports.validateUser = ({ username, password }) => {
-    let user = myDb.getUser({ username, password });
-    if (user) {
-        return user;
-    } else {
-        return null;
-    }
-}
+schema.is().min(8);
+schema.is().max(20);
+schema.has().uppercase();
+schema.has().lowercase();
+schema.has().digits();
+schema.has().not().spaces();
+schema.has().symbols();
+
+module.exports = schema;
 

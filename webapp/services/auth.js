@@ -1,27 +1,39 @@
-const authCheck = require('./validator');
+const mysql = require('../services/db');
+const bcrypt = require('bcrypt');
+
 
 exports.authenticate = (req, res, next) => {
-    // make authenticate path public
-    if (req.path === '/v1/user/') {
-        return next();
+
+    let contentType = req.headers['content-type'];
+
+    if (contentType == 'application/json') {
+
+        let authHeader = req.headers.authorization;
+
+        if (!authHeader) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
+        const username = auth[0];
+        const password = auth[1];
+        mysql.query('select * from RMS.User where email_address = (?)', [username], (err, data) => {
+            if (data[0] != null) {
+                bcrypt.compare(password, data[0].password, (err, result) => {
+                    if (result) {
+                        const { password, ...userWithoutPassword } = data[0];
+                        res.locals.user = userWithoutPassword;
+                        next(); // authorized
+                    } else {
+                        return res.status(401).json({ message: 'Unauthorized' });
+                    }
+                });
+
+            } else {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+        })
+    } else {
+        return res.status(400).json({ message: 'Bad Request' });
     }
-    var authHeader = req.headers.authorization;
-    if (!authHeader) {
-        return res.status(401).json({ message: 'Missing Authorization Header' });
-    }
-  
-    const auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    const username = auth[0];
-    const password = auth[1];
-    let user = authCheck.validateUser({ username, password });
-    if (user) {
-        res.locals.user = user;
-        next(); // authorized
-    }else {
-        var err = new Error('You are not authenticated!');
-        res.setHeader('WWW-Authenticate', 'Basic');      
-        err.status = 401;
-        next(err);
-    }
-   
-  }
+}
