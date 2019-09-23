@@ -43,7 +43,7 @@ router.put('/self', checkUser.authenticate, (req, res) => {
                     res.status(400).json({ msg: 'Bad Request' });
                }
           } else {
-               res.status(204).json();
+               res.status(400).json({ msg: 'Bad Request' });
           }
      } else {
           res.status(401).json({ msg: 'Unauthorized' });
