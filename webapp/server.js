@@ -1,14 +1,12 @@
 const express = require('express');
-const logger = require('morgan');
+const app = express();
+const bodyParser = require('body-parser');
 const usersRouter = require('./routes/user');
 
-const app = express();
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/v1/user', usersRouter);
-
 
 //error handling
 app.use((req, res, next) => {
