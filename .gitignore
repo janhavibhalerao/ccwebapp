@@ -1,2 +1,4 @@
 #ignore node_modules
 webapp/node_modules
+#ignore npm-debug.log
+npm-debug.log
