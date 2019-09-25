@@ -19,7 +19,7 @@ describe('POST Test', () => {
     
     it('Create new User expect code 201',(done) => {
         server.post('/v1/user')   // enter URL for POST
-        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloudfall18@gmail.com'})
+        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloudfall100@gmail.com'})
         .expect("Content-type",/json/)
         .end((err,res)=>{
             const body=res.body;
@@ -37,7 +37,7 @@ describe('POST Test', () => {
     
     it('Error Creating new User status 400',(done) => {
         server.post('/v1/user')   // enter URL for POST
-        .send({first_name :'cloud',last_name :'fall',password :'Cloud@123',email_address :'cloud5@gmail.com'})
+        .send({first_name :'cloud',last_name :'fall',password :'Cloud@123',email_address :'cloudfall100@gmail.com'})
         .expect("Content-type",/json/)
         .end((err,res)=>{
             const body=res.body;
@@ -67,7 +67,7 @@ describe("GET Test",function(){
         });
     });
 
-    it('Unautherized User --> 401 : Unautherized ',(done) => {
+    it('Unauthorized User --> 401 : Unautherized ',(done) => {
         server.get('/v1/user/self',checkUser.authenticate)
         .send({password :'Cloud@123',email_address :'cloud5@gmail.com'})     // enter URL for GET
         .expect("Content-type",/json/)
