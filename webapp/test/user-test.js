@@ -53,7 +53,7 @@ describe('POST Test', () => {
 describe("GET Test",function(){
 
 
-    it("User not found --> 400 : BAD request",function(done){
+    it("Wrong API request --> 404",function(done){
         server
         .get('/v1/user')
         .expect("Content-type",/json/)
@@ -67,9 +67,9 @@ describe("GET Test",function(){
         });
     });
 
-    it('Unauthorized User --> 401 : Unautherized ',(done) => {
+    it('Unauthorized User --> 401 : Unauthorized ',(done) => {
         server.get('/v1/user/self',checkUser.authenticate)
-        .send({password :'Cloud@123',email_address :'cloud5@gmail.com'})     // enter URL for GET
+        .send({password :'Cloud@123',username :'cloud200@gmail.com'})     // enter URL for GET
         .expect("Content-type",/json/)
         .expect(401)
         .end(function(err,res){
