@@ -7,6 +7,7 @@ const supertest = require('supertest');
 const should = require("should");
 const request = require('request');
 const mysql = require('../services/db');
+const checkUser = require('../services/auth');
 var server = supertest.agent("http://localhost:3000");
 const main =require('../routes/user.js');
 
@@ -18,7 +19,7 @@ describe('POST Test', () => {
     
     it('Create new User expect code 201',(done) => {
         server.post('/v1/user')   // enter URL for POST
-        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloud369@gmail.com'})
+        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloud248369@gmail.com'})
         .expect("Content-type",/json/)
         .end((err,res)=>{
             const body=res.body;
@@ -52,7 +53,7 @@ describe('POST Test', () => {
 describe("GET Test",function(){
 
 
-    it("Get Invalid User details",function(done){
+    it("User Not Found",function(done){
         server
         .get('/v1/user')
         .expect("Content-type",/json/)
@@ -62,6 +63,18 @@ describe("GET Test",function(){
             var msg = json_body.error;
             var code = msg.messsage;
             expect(code).to.equal('NOT FOUND');
+            done();
+        });
+    });
+
+    it('Invalid User credentials --> 400 : BAD request',(done) => {
+        server.get('/v1/user/self',checkUser.authenticate)     // enter URL for PUT
+        .expect("Content-type",/json/)
+        .expect(400)
+        .end(function(err,res){
+            var json_body = res.body;
+            var msg = json_body.message;
+            expect(msg).to.equal('Bad Request');
             done();
         });
     });
@@ -107,45 +120,22 @@ describe('Basic URL Test', () => {
     });
 });
 
-//-------------------------------Integra---------------------------------------------
+//-------------------------------PUT---------------------------------------------
 
-// describe('POST then GET Test', () => {
+describe('PUT request', () => {
 
-//     it('Get User Details',(done) => {
-//         server.post('/v1/user')   // enter URL for POST
-//         .send({first_name:'',last_name:'',password:'',email_address:''})
-//         .then((res)=>{
-//             server.get('/v1/user')     // enter URL for GET
-//             .send({password:'',email_address:''})
-//             .then((res)=>{
-//                 const body=res.body;
-//                 expect(body.to.contain.property('id'));
-//                 expect(body.to.contain.property('firstname'));
-//                 expect(body.to.contain.property('lastname'));
-//                 expect(body.to.contain.property('email_address'));
-//                 expect(body.to.contain.property('account_created'));
-//                 expect(body.to.contain.property('account_updated'));
-//                 done();                 
-//             })
-//             .catch((err)=> done(err));
-//         });
-//     });
-    
-//     it('check string',(done) => {
-//         server.post('/v1/user')   // enter URL for POST
-//         .send({first_name:'',last_name:'',password:'',email_address:''})
-//         .then((res)=>{
-//             server.get('/v1/user')     // enter URL for GET
-//             .send({password:'',email_address:''})
-//             .then((res)=>{
-//                 const body=res.body;
-//                 assert.isString(body.first_name);
-//             });
-//         });
-//     });
-
-
-// });
+    it('Update Invalid User Details --> 400 : BAD request',(done) => {
+        server.put('/v1/user/self',checkUser.authenticate)     // enter URL for PUT
+        .expect("Content-type",/json/)
+        .expect(400)
+        .end(function(err,res){
+            var json_body = res.body;
+            var msg = json_body.message;
+            expect(msg).to.equal('Bad Request');
+            done();
+        });
+    });
+});
 
 
 //------------------ mysql connection for mocking -------------------------
