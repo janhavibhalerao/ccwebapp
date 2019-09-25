@@ -15,47 +15,35 @@ const main =require('../routes/user.js');
 
 //----------------------------POST------------------------------------
 describe('POST Test', () => {
-
-    // before((done) => {
-    //     mysql.createConnection()
-    //     .then(() => done())
-    //     .catch((err) => done(err));
-    // });
-
-    // after((done) => {
-    //     conn.close()
-    //     .then(() => done())
-    //     .catch((err) => done(err));
-    // });
-
-    it('Create new User',(done) => {
-        request(main).post('/v1/user')   // enter URL for POST
-        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloud@gmail.com'})
+    
+    it('Create new User expect code 201',(done) => {
+        server.post('/v1/user')   // enter URL for POST
+        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloud369@gmail.com'})
         .expect("Content-type",/json/)
         .end((err,res)=>{
             const body=res.body;
-            expect(body.to.contain.property('id'));
-            expect(body.to.contain.property('first_name'));
-            expect(body.to.contain.property('last_name'));
-            expect(body.to.contain.property('email_address'));
-            expect(body.to.contain.property('account_created'));
-            expect(body.to.contain.property('account_updated'));
+            expect(body).to.contain.property('id');
+            expect(body).to.contain.property('first_name');
+            expect(body).to.contain.property('last_name');
+            expect(body).to.contain.property('email_address');
+            expect(body).to.contain.property('account_created');
+            expect(body).to.contain.property('account_updated');
             res.status.should.equal(201);
             done();
-        })
-        .catch((err)=> done(err));
+        });
+        //.catch((err)=> done(err));
     });
-
-    it('Error Creating new User',(done) => {
-        request(main).post('v1/user')   // enter URL for POST
-        .send({first_name:'abc',last_name:'xyz',password:'Abc@12345',email_address:'abcxyz'})
+    
+    it('Error Creating new User status 400',(done) => {
+        server.post('/v1/user')   // enter URL for POST
+        .send({first_name :'cloud',last_name :'fall',password :'Cloud@123',email_address :'cloud5@gmail.com'})
         .expect("Content-type",/json/)
         .end((err,res)=>{
             const body=res.body;
+            console.log(res.body);
             res.status.should.equal(400);
             done();
-        })
-        .catch((err)=> done(err));
+        });
     });
 });
 
@@ -63,57 +51,37 @@ describe('POST Test', () => {
 
 describe("GET Test",function(){
 
-    // before((done) => {
-    //     mysql.createConnection()
-    //     .then(() => done())
-    //     .catch((err) => done(err));
-    // });
 
-    // after((done) => {
-    //     conn.close()
-    //     .then(() => done())
-    //     .catch((err) => done(err));
-    // });
-
-    it("user authentication",function(done){
+    it("Get Invalid User details",function(done){
         server
         .get('/v1/user')
-        .send({"email-address" : "cloud@gmail.com", "password" : "Cloud@123"})
         .expect("Content-type",/json/)
-        .expect(200) // HTTP Response
+        .expect(404)
         .end(function(err,res){
-        res.status.should.equal(200); // HTTP status
-        res.body.error.should.equal(false); // Error key
-        console.log(res.body.data);
-        //res.body.data.should.equal(7);
-        done();
+            var json_body = res.body;
+            var msg = json_body.error;
+            var code = msg.messsage;
+            expect(code).to.equal('NOT FOUND');
+            done();
         });
     });
 
-//     it('Get NO User details',(done) => {
-//         request(main).get('')   // enter URL for GET
-//         .send({password:'',email_address:''})
-//         .then((res)=>{
-//             const body=res.body;
-//             console.log(body);
-//             //expect(body.length).to.equal(0);
-//             done();
-//         })
-//         .catch((err)=> done(err));
-//     });
-
 });
 
-
+//--------------------------Invalid URL----------------------------------
 describe('Basic URL Test', () => {
 
     it('Main page content',function(done){
         this.timeout(15000);
         setTimeout(done, 15000);
         request('http://localhost:3000',function(error,response,body){
-            //expect(body).to.equal('{"error": {"messsage": "NOT FOUND"}}');
-            //body.should.have.property('error');
-            console.log(body);
+            var json_body = JSON.parse(body);
+            //console.log(json_body);
+            var msg = json_body.error;
+            //console.log(msg);
+            var code = msg.messsage;
+            //console.log(code);
+            expect(code).to.equal('NOT FOUND');
             done();
         });
     });
@@ -144,10 +112,10 @@ describe('Basic URL Test', () => {
 // describe('POST then GET Test', () => {
 
 //     it('Get User Details',(done) => {
-//         request(main).post('/v1/user')   // enter URL for POST
+//         server.post('/v1/user')   // enter URL for POST
 //         .send({first_name:'',last_name:'',password:'',email_address:''})
 //         .then((res)=>{
-//             request(main).get('/v1/user')     // enter URL for GET
+//             server.get('/v1/user')     // enter URL for GET
 //             .send({password:'',email_address:''})
 //             .then((res)=>{
 //                 const body=res.body;
@@ -164,27 +132,14 @@ describe('Basic URL Test', () => {
 //     });
     
 //     it('check string',(done) => {
-//         request(main).post('/v1/user')   // enter URL for POST
+//         server.post('/v1/user')   // enter URL for POST
 //         .send({first_name:'',last_name:'',password:'',email_address:''})
 //         .then((res)=>{
-//             request(main).get('/v1/user')     // enter URL for GET
+//             server.get('/v1/user')     // enter URL for GET
 //             .send({password:'',email_address:''})
 //             .then((res)=>{
 //                 const body=res.body;
 //                 assert.isString(body.first_name);
-//             });
-//         });
-//     });
-
-//     it('check string',(done) => {
-//         request(main).post('/v1/user')   // enter URL for POST
-//         .send({first_name:'',last_name:'',password:'',email_address:''})
-//         .then((res)=>{
-//             request(main).get('/v1/user')     // enter URL for GET
-//             .send({password:'',email_address:''})
-//             .then((res)=>{
-//                 const body=res.body;
-//                 assert.isString(body.last_name);
 //             });
 //         });
 //     });
@@ -205,23 +160,3 @@ describe('Basic URL Test', () => {
 //         done();
 //     });
 // });
-
-
-//----------------using chai----------------
-// var chai = require('chai');
-// var chaiHttp = require('chai-http');
-// var server = require('../server');
-// var should = chai.should();
-
-// chai.use(chaiHttp);
-
-
-// it('test POST', function(done) {
-//     chai.request(server)
-//       .get('/v1/user')  // enter URL for get
-//       .send({"email-address" : "abc@gmail.com", "password" : "abcsd"})
-//       .end(function(err, res){
-//         res.should.have.status(200);
-//         done();
-//       });
-//   });
