@@ -15,10 +15,11 @@ router.post('/', (req, res, next) => {
         let last_name = req.body.last_name;
         let password = req.body.password;
         let email_address = req.body.email_address;
-        let salt = bcrypt.genSaltSync(saltRounds);
-        let hashedPassword = bcrypt.hashSync(password, salt);
+
 
         if (first_name != null && last_name != null && password != null && email_address != null && validator.validate(password) == true && emailValidator.validate(email_address) == true) {
+            let salt = bcrypt.genSaltSync(saltRounds);
+            let hashedPassword = bcrypt.hashSync(password, salt);
             const id = uuid();
             const account_created = moment().format('YYYY-MM-DD HH:mm:ss');
             const account_updated = moment().format('YYYY-MM-DD HH:mm:ss');
