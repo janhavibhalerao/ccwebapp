@@ -12,26 +12,23 @@
 * Node.js
 * Express.js
 * MySQL
-* Postman & Mocha for testing
+* Postman ,Mocha & Chai for testing
 
 ## Build Instructions
-* Pre-requisites: Install Node.js,IDE,MySQL
+* Pre-requisites: Install Node.js,npm,MySQL
+* Set environment variables for MySQL connection and node server port
 * Clone or download repository
-* Open project in IDE
 * On terminal navigate to path :csye6225/dev/ccwebapps/webapp
-* Run npm start to start node server
+* Run npm install, npm start to start node server
 * In Postman: 
 1. POST request: localhost:3000/v1/user
 2. GET request: localhost:3000/v1/user/self
 3. PUT request: localhost:3000/v1/user/self
 
-
-
 ## Deploy Instructions
 
-
 ## Running Tests
-
+Run npm start to start node server & npm test for running test cases
 
 ## CI/CD
 
