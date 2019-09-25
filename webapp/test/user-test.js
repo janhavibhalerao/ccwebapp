@@ -19,7 +19,7 @@ describe('POST Test', () => {
     
     it('Create new User expect code 201',(done) => {
         server.post('/v1/user')   // enter URL for POST
-        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloud248369@gmail.com'})
+        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloudfall19@gmail.com'})
         .expect("Content-type",/json/)
         .end((err,res)=>{
             const body=res.body;
@@ -53,7 +53,7 @@ describe('POST Test', () => {
 describe("GET Test",function(){
 
 
-    it("User Not Found",function(done){
+    it("User not found --> 400 : BAD request",function(done){
         server
         .get('/v1/user')
         .expect("Content-type",/json/)
@@ -67,14 +67,16 @@ describe("GET Test",function(){
         });
     });
 
-    it('Invalid User credentials --> 400 : BAD request',(done) => {
-        server.get('/v1/user/self',checkUser.authenticate)     // enter URL for PUT
+    it('Unautherized User --> 401 : Unautherized ',(done) => {
+        server.get('/v1/user/self',checkUser.authenticate)
+        .send({password :'Cloud@123',email_address :'cloud5@gmail.com'})     // enter URL for PUT
         .expect("Content-type",/json/)
-        .expect(400)
+        .expect(401)
         .end(function(err,res){
             var json_body = res.body;
+            console.log(json_body);
             var msg = json_body.message;
-            expect(msg).to.equal('Bad Request');
+            expect(msg).to.equal('Unauthorized');
             done();
         });
     });
@@ -132,6 +134,20 @@ describe('PUT request', () => {
             var json_body = res.body;
             var msg = json_body.message;
             expect(msg).to.equal('Bad Request');
+            done();
+        });
+    });
+
+    it('Unautherized User --> 401 : Unautherized ',(done) => {
+        server.put('/v1/user/self',checkUser.authenticate)
+        .send({password :'Cloud@123',email_address :'cloud5@gmail.com'})     // enter URL for PUT
+        .expect("Content-type",/json/)
+        .expect(401)
+        .end(function(err,res){
+            var json_body = res.body;
+            console.log(json_body);
+            var msg = json_body.message;
+            expect(msg).to.equal('Unauthorized');
             done();
         });
     });
