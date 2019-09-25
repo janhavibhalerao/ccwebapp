@@ -22,9 +22,10 @@ app.use((error, req, res, next) => {
         }
     });
 });
-// starting server
-const PORT = process.env.PORT;
-app.listen(PORT, () => {
+
+// start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT,() => {
     console.log(`Server listening on port: ${PORT}`);
 });
   
