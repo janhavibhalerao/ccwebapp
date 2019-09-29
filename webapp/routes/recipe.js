@@ -73,7 +73,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
 });
 
 // To get the user information
-router.get('/:id', checkUser.authenticate, (req, res) => {
+router.get('/:id', (req, res) => {
     if (res.locals.user) {
         mysql.query('select * from RMS.Recipe where author_id = (?) and id=(?)', [res.locals.user.id, req.params.id], (err, data) => {
             if (data[0] != null) {
