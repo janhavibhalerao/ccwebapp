@@ -22,7 +22,7 @@ let validateRecipe = [
     check('ingredients').exists().isArray().not().isEmpty()
     .custom((value, { req }) => {
         for(let i=0;i<value.length;i++) {
-            value[i] = value[i].replace(/\s/g,'');
+            value[i] = value[i].replace(/\s/g,' ');
         }
         return value.length>1?(new Set(value.map(Function.prototype.call, String.prototype.trim))).size === value.length : true;
     }),
