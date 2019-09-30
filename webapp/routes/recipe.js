@@ -104,27 +104,27 @@ router.get('/:id', (req, res) => {
 router.delete('/:id',checkUser.authenticate,(req,res) => {
     if(res.locals.user){
         //let rid=req.param.id;
-        mysql.query('select * from RMS.Recipe where id=(?)', [req.param.id], (err,result) => {
+        mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err,result) => {
             if(result[0]!=null){
-                if(result[0].author_id === req.param.id){
-                    mysql.query('delete from RMS.Recipe where id=(?)',[req.param.id], (err,result) => {
+                if(result[0].author_id === res.locals.user.id){
+                    mysql.query('delete from RMS.Recipe where id=(?)',[req.params.id], (err,result) => {
                         if(err){
-                            //console.log(err);
-                            res.Status(404);
+                           
+                            return res.sendStatus(404);
+
                         } else {
-                            console.log("Number of records deleted: " + result.affectedRows);
-                            return res.status(201).json({msg:'No content'});
+                            return res.sendStatus(204);
                         }
                     });
                 }else{
-                    return res.status(401).json({ msg: 'Unauthorized' });
+                    return res.sendStatus(401);
                 }
-            } else {
-                return res.status(404).json({ msg: 'recipe Not found' });
+            } else { console.log('inside '+err);
+                return res.sendStatus(404);
             }
         });
     }else{
-        return res.status(401).json({ msg: 'Unauthorized' });
+        return res.sendStatus(401);
     }
 });
 
