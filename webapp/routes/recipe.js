@@ -99,4 +99,33 @@ router.get('/:id', (req, res) => {
     }
 });
 
+
+//to delete the recipe 
+router.delete('/:id',checkUser.authenticate,(req,res) => {
+    if(res.locals.user){
+        //let rid=req.param.id;
+        mysql.query('select * from RMS.Recipe where id=(?)', [req.param.id], (err,result) => {
+            if(result[0]!=null){
+                if(result[0].author_id === req.param.id){
+                    mysql.query('delete from RMS.Recipe where id=(?)',[req.param.id], (err,result) => {
+                        if(err){
+                            //console.log(err);
+                            res.Status(404);
+                        } else {
+                            console.log("Number of records deleted: " + result.affectedRows);
+                            return res.status(201).json({msg:'No content'});
+                        }
+                    });
+                }else{
+                    return res.status(401).json({ msg: 'Unauthorized' });
+                }
+            } else {
+                return res.status(404).json({ msg: 'recipe Not found' });
+            }
+        });
+    }else{
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+});
+
 module.exports = router;    
