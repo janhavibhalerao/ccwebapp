@@ -11,9 +11,6 @@ schema.has().not().spaces();
 schema.has().symbols();
 
 let validateRecipe = [
-    check('id').not().exists(), check('created_ts').not().exists(),
-    check('updated_ts').not().exists(), check('author_id').not().exists(),
-    check('total_time_in_min').not().exists(),   
     check('cook_time_in_min').exists().isInt({min:5}).isDivisibleBy(5),
     check('prep_time_in_min').exists().isInt({min:5}).isDivisibleBy(5),
     check('title').exists().isString().trim().not().isEmpty(), 
