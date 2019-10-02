@@ -8,55 +8,86 @@ const checkUser = require('../services/auth');
 const localTime = require('../services/localTime');
 const { check, validationResult } = require('express-validator');
 
-// Protected route
+// Protected routes
 
 router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) => {
     if (res.locals.user) {
-        //if (Object.keys(req.body.length) > 0) {
-            let contentType = req.headers['content-type'];
-            if (contentType == 'application/json') {
-                let validationFail = validationResult(req);
-                if (!validationFail.isEmpty()) {
-                    return res.sendStatus(400);
-                }
-                //get request body data & do validations
-                else {
-                    let steps = req.body.steps;
-                    let hi = 0;
-                    let ordered = true;
-                    let positionArr = [];
-                    
-                    steps.forEach(element => {
-                        positionArr.push(element.position);
-                        if (element.position > hi) {
-                            hi = element.position
-                        }
-                    });
-                    if (new Set(positionArr).size !== positionArr.length) ordered = false;
-                    else if (hi !== steps.length) ordered = false;
-                    if (ordered) {
-                        let prepTime = parseInt(req.body.prep_time_in_min);
-                        let cookTime = parseInt(req.body.cook_time_in_min);
-                        let totalTimeForPrep = prepTime + cookTime;
-                        let update_column = Object.keys(req.body).map(key => {
-                            if(key == "ingredients"){
+        let contentType = req.headers['content-type'];
+        if (contentType == 'application/json') {
+            let validationFail = validationResult(req);
+            if (!validationFail.isEmpty()) {
+                return res.sendStatus(400);
+            }
+            else {
+                let steps = req.body.steps;
+                let hi = 0;
+                let ordered = true;
+                let positionArr = [];
 
-                            let x= {...req.body[key]}
-                                console.log(x);
-                                console.log(JSON.stringify(...req.body[key]));
-                                return `${key} = ${JSON.stringify(x)}`;
-                            }
-                            else{
-                                return `${key} = "${req.body[key]}"`;
-                            }  
-                        });
-                        mysql.query(`UPDATE RMS.Recipe SET ${update_column.join(" ,")}, updated_ts = (?) WHERE id = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), req.params.id], (err, results) => {
+                steps.forEach(element => {
+                    positionArr.push(element.position);
+                    if (element.position > hi) {
+                        hi = element.position
+                    }
+                });
+                if (new Set(positionArr).size !== positionArr.length) ordered = false;
+                else if (hi !== steps.length) ordered = false;
+
+                if (ordered) {
+                    let prepTime = parseInt(req.body.prep_time_in_min);
+                    let cookTime = parseInt(req.body.cook_time_in_min);
+                    let totalTimeForPrep = prepTime + cookTime;
+                    /*let update_column = Object.keys(req.body).map(key => {
+                        if (key == "ingredients" || key == "nutrition_information" || key == "steps") {
+                            console.log(key);
+                            key_body = req.body[key];
+                            console.log(key_body);
+                            /*console.log(Object.keys(key_body));
+                            console.log(Object.values(key_body));
+                            let x = { ...req.body[key] };
+                            console.log(x);*/
+                    // console.log(JSON.stringify(...req.body[key]));
+                    // console.log(JSON.parse(JSON.stringify(...req.body[key])));
+                    //return `${key} = JSON_SET(${key}, $.${Object.keys(key_body)}], ${Object.values(key_body)})`;
+
+                    //return ` ${key} = ${JSON.stringify(req.body[key])}`;
+                    /*}
+                    else {
+                        return ` ${key} = "${req.body[key]}"`;
+                    }*/
+                    // });
+
+                    // mysql.query(`UPDATE RMS.Recipe SET ${update_column.join(" ,")},
+                    mysql.query(`UPDATE RMS.Recipe SET 
+                   cook_time_in_min =(?),
+                   prep_time_in_min =(?), 
+                   total_time_in_min=(?),
+                   title=(?),
+                   cusine=(?),
+                   servings=(?),
+                   ingredients=(?),
+                   steps=(?),
+                   nutrition_information=(?),
+                   updated_ts=(?)
+                   WHERE id = (?)`,
+                        [cookTime,
+                            prepTime,
+                            totalTimeForPrep,
+                            req.body.title,
+                            req.body.cusine,
+                            req.body.servings,
+                            JSON.stringify(req.body.ingredients),
+                            JSON.stringify(req.body.steps),
+                            JSON.stringify(req.body.nutrition_information),
+                            moment().format('YYYY-MM-DD HH:mm:ss'),
+                            req.params.id],
+                        (err, results) => {
                             if (err) {
                                 console.log(err);
                                 return res.sendStatus(404);
                             }
                             else {
-                                return res.sendStatus(200).json({
+                                return res.json({
                                     id: req.params.id,
                                     created_ts: res.locals.user.created_ts,
                                     updated_ts: res.locals.user.updated_ts,
@@ -73,20 +104,17 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                 });
                             }
                         })
-                    }
-                    else {
-                        res.sendStatus(400);
-                    }
-
                 }
+                else {
+                    res.sendStatus(400);
+                }
+
             }
-            else {
-                res.sendStatus(400);
-            }
-        /*}
-       else {
+        }
+        else {
             res.sendStatus(400);
-        }*/
+        }
+
     }
     else {
         res.sendStatus(401);
