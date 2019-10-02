@@ -9,6 +9,90 @@ const localTime = require('../services/localTime');
 const { check, validationResult } = require('express-validator');
 
 // Protected route
+
+router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) => {
+    if (res.locals.user) {
+        //if (Object.keys(req.body.length) > 0) {
+            let contentType = req.headers['content-type'];
+            if (contentType == 'application/json') {
+                let validationFail = validationResult(req);
+                if (!validationFail.isEmpty()) {
+                    return res.sendStatus(400);
+                }
+                //get request body data & do validations
+                else {
+                    let steps = req.body.steps;
+                    let hi = 0;
+                    let ordered = true;
+                    let positionArr = [];
+                    
+                    steps.forEach(element => {
+                        positionArr.push(element.position);
+                        if (element.position > hi) {
+                            hi = element.position
+                        }
+                    });
+                    if (new Set(positionArr).size !== positionArr.length) ordered = false;
+                    else if (hi !== steps.length) ordered = false;
+                    if (ordered) {
+                        let prepTime = parseInt(req.body.prep_time_in_min);
+                        let cookTime = parseInt(req.body.cook_time_in_min);
+                        let totalTimeForPrep = prepTime + cookTime;
+                        let update_column = Object.keys(req.body).map(key => {
+                            if(key == "ingredients"){
+
+                            let x= {...req.body[key]}
+                                console.log(x);
+                                console.log(JSON.stringify(...req.body[key]));
+                                return `${key} = ${JSON.stringify(x)}`;
+                            }
+                            else{
+                                return `${key} = "${req.body[key]}"`;
+                            }  
+                        });
+                        mysql.query(`UPDATE RMS.Recipe SET ${update_column.join(" ,")}, updated_ts = (?) WHERE id = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), req.params.id], (err, results) => {
+                            if (err) {
+                                console.log(err);
+                                return res.sendStatus(404);
+                            }
+                            else {
+                                return res.sendStatus(200).json({
+                                    id: req.params.id,
+                                    created_ts: res.locals.user.created_ts,
+                                    updated_ts: res.locals.user.updated_ts,
+                                    author_id: res.locals.user.id,
+                                    cook_time_in_min: cookTime,
+                                    prep_time_in_min: prepTime,
+                                    total_time_in_min: totalTimeForPrep,
+                                    title: req.body.title,
+                                    cusine: req.body.cusine,
+                                    servings: req.body.servings,
+                                    ingredients: req.body.ingredients,
+                                    steps: req.body.steps,
+                                    nutrition_information: req.body.nutrition_information
+                                });
+                            }
+                        })
+                    }
+                    else {
+                        res.sendStatus(400);
+                    }
+
+                }
+            }
+            else {
+                res.sendStatus(400);
+            }
+        /*}
+       else {
+            res.sendStatus(400);
+        }*/
+    }
+    else {
+        res.sendStatus(401);
+    }
+});
+
 router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, next) => {
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
