@@ -106,30 +106,27 @@ router.get('/:id', (req, res) => {
 
 
 //to delete the recipe 
-router.delete('/:id',checkUser.authenticate,(req,res) => {
-    if(res.locals.user){
-        //let rid=req.param.id;
-        mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err,result) => {
-            if(result[0]!=null){
-                if(result[0].author_id === res.locals.user.id){
-                    mysql.query('delete from RMS.Recipe where id=(?)',[req.params.id], (err,result) => {
-                        if(err){
-                           
-                            return res.sendStatus(404);
-
+router.delete('/:id', checkUser.authenticate, (req, res) => {
+    if (res.locals.user) {
+        mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, result) => {
+            if (result[0] != null) {
+                if (result[0].author_id === res.locals.user.id) {
+                    mysql.query('delete from RMS.Recipe where id=(?)', [req.params.id], (err, result) => {
+                        if (err) {
+                            return res.status(404).json();
                         } else {
-                            return res.sendStatus(204);
+                            return res.status(204).json();
                         }
                     });
-                }else{
-                    return res.sendStatus(401);
+                } else {
+                    return res.status(401).json();
                 }
-            } else { console.log('inside '+err);
-                return res.sendStatus(404);
+            } else {
+                return res.status(404).json();
             }
         });
-    }else{
-        return res.sendStatus(401);
+    } else {
+        return res.status(401).json();
     }
 });
 
