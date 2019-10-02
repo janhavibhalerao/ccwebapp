@@ -8,6 +8,7 @@ const moment = require('moment');
 const mysql = require('../services/db');
 const saltRounds = 10;
 const checkUser = require('../services/auth');
+const localTime = require('../services/localTime');
 
 
 // protected routes
@@ -23,34 +24,36 @@ router.put('/self', checkUser.authenticate, (req, res) => {
                     let email_address = req.body.email_address;
                     let account_created = req.body.account_created;
                     let account_updated = req.body.account_updated;
-                    if (password != null && validator.validate(password)) {
+                    if (password != null && validator.schema.validate(password)) {
                          let hashedPassword = bcrypt.hashSync(password, 10);
                          req.body.password = hashedPassword;
-                    } else if(password!=null) {
-                         return res.status(400).json({ msg: 'Bad Request' });
+                    } else if (password != null) {
+                         return res.status(400).json({
+                              msg: 'Password must be: atleast 8 letters & should contain an uppercase, a lowercase, a digit & a symbol! No spaces allowed'
+                         });
                     }
                     if (id != null || email_address != null || account_created != null || account_updated != null) {
-                         return res.status(400).json({ msg: 'Bad Request' });
+                         return res.status(400).json();
                     } else {
                          let update_set = Object.keys(req.body).map(value => {
                               return ` ${value}  = "${req.body[value]}"`;
                          });
                          mysql.query(`UPDATE RMS.User SET ${update_set.join(" ,")}, account_updated=(?) WHERE email_address = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), res.locals.user.email_address], function (error, results) {
                               if (error) {
-                                   return res.status(400).json({ msg: 'Bad Request' });
+                                   return res.status(400).json();
                               } else {
-                                   res.status(204).json();
+                                   return res.status(204).json();
                               }
                          });
                     }
                } else {
-                    res.status(400).json({ msg: 'Bad Request' });
+                    return res.status(400).json();
                }
           } else {
-               res.status(400).json({ msg: 'Bad Request' });
+               return res.status(400).json();
           }
      } else {
-          res.status(401).json({ msg: 'Unauthorized' });
+          return res.status(401).json();
      }
 });
 
@@ -58,63 +61,63 @@ router.put('/self', checkUser.authenticate, (req, res) => {
 router.get('/self', checkUser.authenticate, (req, res) => {
      if (res.locals.user) {
           res.statusCode = 200;
+          res.locals.user.account_created = localTime(res.locals.user.account_created);
+          res.locals.user.account_updated = localTime(res.locals.user.account_updated);
           res.setHeader('Content-Type', 'application/json');
           res.json(res.locals.user);
-
      }
 });
 
 
 
 router.post('/', (req, res, next) => {
-    let contentType = req.headers['content-type'];
-    if (contentType == 'application/json') {
-        let first_name = req.body.first_name;
-        let last_name = req.body.last_name;
-        let password = req.body.password;
-        let email_address = req.body.email_address;
+     let contentType = req.headers['content-type'];
+     if (contentType == 'application/json') {
+          let first_name = req.body.first_name;
+          let last_name = req.body.last_name;
+          let password = req.body.password;
+          let email_address = req.body.email_address;
 
 
-        if (first_name != null && last_name != null && password != null && email_address != null && validator.validate(password) == true && emailValidator.validate(email_address) == true) {
-            let salt = bcrypt.genSaltSync(saltRounds);
-            let hashedPassword = bcrypt.hashSync(password, salt);
-            const id = uuid();
-            const account_created = moment().format('YYYY-MM-DD HH:mm:ss');
-            const account_updated = moment().format('YYYY-MM-DD HH:mm:ss');
+          if (first_name != null && last_name != null && password != null && email_address != null && validator.schema.validate(password) == true && emailValidator.validate(email_address) == true) {
+               let salt = bcrypt.genSaltSync(saltRounds);
+               let hashedPassword = bcrypt.hashSync(password, salt);
+               const id = uuid();
+               const account_created = moment().format('YYYY-MM-DD HH:mm:ss');
+               const account_updated = moment().format('YYYY-MM-DD HH:mm:ss');
 
-            mysql.query('insert into RMS.User(`id`,`first_name`,`last_name`,`password`,`email_address`,`account_created`,`account_updated`)values(?,?,?,?,?,?,?)',
-                [id, first_name, last_name, hashedPassword, email_address, account_created, account_updated], (err, result) => {
-                    if (err) {
-                        console.log(err);
-                        res.status(400).json({ msg: ` Email: ${email_address} already exists!` });
-                    }
-                    else {
-                        //res.status(201).json(`User created successfully!Created email: ${email_address}`);
-                        res.status(201).json({
-                            id: id,
-                            first_name: first_name,
-                            last_name: last_name,
-                            email_address: email_address,
-                            account_created: account_created,
-                            account_updated: account_updated
-                        });
-                    }
-                });
-        }
-        else if (first_name == null || last_name == null || password == null || email_address == null) {
-            res.status(400).json({ msg: 'Please enter all details!' });
-        }
-        else if (emailValidator.validate(email_address) == false) {
-            res.status(400).json({ msg: `${email_address} is not a valid email!` });
-        }
-        else {
-            res.status(400).json({
-                msg: 'Password must be: atleast 8 letters & should contain an uppercase, a lowercase, a digit & a symbol! No spaces allowed'
-            });
-        }
-    }
-    else {
-        res.status(400).json({ msg: 'Request type must be JSON!' });
-    }
+               mysql.query('insert into RMS.User(`id`,`first_name`,`last_name`,`password`,`email_address`,`account_created`,`account_updated`)values(?,?,?,?,?,?,?)',
+                    [id, first_name, last_name, hashedPassword, email_address, account_created, account_updated], (err, result) => {
+                         if (err) {
+                              return res.status(400).json({ msg: ` Email: ${email_address} already exists!` });
+                         }
+                         else {
+                              return res.status(201).json({
+                                   id: id,
+                                   first_name: first_name,
+                                   last_name: last_name,
+                                   email_address: email_address,
+                                   account_created: account_created,
+                                   account_updated: account_updated
+                              });
+                         }
+                    });
+          }
+          else if (first_name == null || last_name == null || password == null || email_address == null) {
+               return res.status(400).json({ msg: 'Please enter all details!' });
+          }
+          else if (emailValidator.validate(email_address) == false) {
+               return res.status(400).json({ msg: `${email_address} is not a valid email!` });
+          }
+          else {
+               return res.status(400).json({
+                    msg: 'Password must be: atleast 8 letters & should contain an uppercase, a lowercase, a digit & a symbol! No spaces allowed'
+               });
+          }
+     }
+     else {
+          return res.status(400).json({ msg: 'Request type must be JSON!' });
+     }
 });
+
 module.exports = router;

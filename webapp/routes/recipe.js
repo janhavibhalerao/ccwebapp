@@ -5,6 +5,7 @@ const uuid = require('uuid');
 const moment = require('moment');
 const mysql = require('../services/db');
 const checkUser = require('../services/auth');
+const localTime = require('../services/localTime');
 const { check, validationResult } = require('express-validator');
 
 // Protected route
@@ -13,19 +14,21 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
     if (contentType == 'application/json') {
         let errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.sendStatus(400);
+            return res.status(400).json();
         } else {
             let steps = req.body.steps;
-            let prev = 0;
+            let hi = 0;
             let ordered = true;
+            let positionArr = [];
             steps.forEach(element => {
-                if (element.position !== prev + 1) {
-                    ordered = false;
+                positionArr.push(element.position);
+                if (element.position > hi) {
+                    hi = element.position
                 }
-                prev = element.position;
-
             });
 
+            if (new Set(positionArr).size !== positionArr.length) ordered = false;
+            else if (hi !== steps.length) ordered = false;
             if (ordered) {
                 let prepTime = parseInt(req.body.prep_time_in_min);
                 let cookTime = parseInt(req.body.cook_time_in_min);
@@ -46,10 +49,10 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                         JSON.stringify(req.body.nutrition_information)
                     ], (err, result) => {
                         if (err) {
-                            res.sendStatus(400);
+                            return res.status(400).json();
                         }
                         else {
-                            res.status(201).json({
+                            return res.status(201).json({
 
                                 id: id,
                                 created_ts: timeStamp,
@@ -68,11 +71,11 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                         }
                     });
             } else {
-                return res.sendStatus(400);
+                return res.status(400).json();
             }
         }
     } else {
-        return res.sendStatus(400);
+        return res.status(400).json();
     }
 });
 
@@ -82,20 +85,22 @@ router.get('/:id', (req, res) => {
     if (contentType == 'application/json') {
         mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, data) => {
             if (err) {
-                return res.sendStatus(400);
+                return res.status(400).json();
             }
             else if (data[0] != null) {
+                data[0].created_ts = localTime(data[0].created_ts);
+                data[0].updated_ts = localTime(data[0].updated_ts);
                 data[0].ingredients = JSON.parse(data[0].ingredients);
                 data[0].steps = JSON.parse(data[0].steps);
                 data[0].nutrition_information = JSON.parse(data[0].nutrition_information);
                 return res.status(200).json(data[0]);
             } else {
-                return res.sendStatus(400);
+                return res.status(404).json();
             }
 
         });
     } else {
-        return res.sendStatus(400);
+        return res.status(400).json();
     }
 });
 
@@ -127,5 +132,7 @@ router.delete('/:id',checkUser.authenticate,(req,res) => {
         return res.sendStatus(401);
     }
 });
+
+
 
 module.exports = router;    
