@@ -20,10 +20,16 @@
 * Clone or download repository
 * On terminal navigate to path :csye6225/dev/ccwebapps/webapp
 * Run npm install, npm start to start node server
-* In Postman: 
+* In Postman:
+* User:
 1. POST request: localhost:3000/v1/user
 2. GET request: localhost:3000/v1/user/self
 3. PUT request: localhost:3000/v1/user/self
+* Recipes:
+1. GET request: localhost:3000/v1/recipie/{id}
+2. POST request: localhost:3000/v1/recipie/
+3. DELETE request: localhost:3000/v1/recipie/{id}
+4. PUT request: localhost:3000/v1/recipie/{id}
 
 ## Deploy Instructions
 

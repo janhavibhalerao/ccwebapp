@@ -7,7 +7,7 @@ exports.authenticate = (req, res, next) => {
     if (contentType == 'application/json') {
         let authHeader = req.headers.authorization;
         if (!authHeader) {
-            return res.status(401).json({ message: 'Unauthorized' });
+            return res.status(401).json();
         }
 
         const auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
@@ -21,15 +21,15 @@ exports.authenticate = (req, res, next) => {
                         res.locals.user = userWithoutPassword;
                         next(); // authorized
                     } else {
-                        return res.status(401).json({ message: 'Unauthorized' });
+                        return res.status(401).json();
                     }
                 });
 
             } else {
-                return res.status(401).json({ message: 'Unauthorized' });
+                return res.status(401).json();
             }
         })
     } else {
-        return res.status(400).json({ message: 'Bad Request' });
+        return res.status(400).json();
     }
 }

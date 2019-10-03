@@ -19,7 +19,7 @@ describe('POST Test', () => {
     
     it('Create new User expect code 201',(done) => {
         server.post('/v1/user')   // enter URL for POST
-        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloudfall100@gmail.com'})
+        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloudfall555@gmail.com'})
         .expect("Content-type",/json/)
         .end((err,res)=>{
             const body=res.body;
@@ -37,7 +37,7 @@ describe('POST Test', () => {
     
     it('Error Creating new User status 400',(done) => {
         server.post('/v1/user')   // enter URL for POST
-        .send({first_name :'cloud',last_name :'fall',password :'Cloud@123',email_address :'cloudfall100@gmail.com'})
+        .send({first_name :'cloud',last_name :'fall',password :'Cloud@123',email_address :'cloudfall555@gmail.com'})
         .expect("Content-type",/json/)
         .end((err,res)=>{
             const body=res.body;
@@ -59,10 +59,7 @@ describe("GET Test",function(){
         .expect("Content-type",/json/)
         .expect(404)
         .end(function(err,res){
-            var json_body = res.body;
-            var msg = json_body.error;
-            var code = msg.messsage;
-            expect(code).to.equal('NOT FOUND');
+            res.status.should.equal(404);
             done();
         });
     });
@@ -73,10 +70,7 @@ describe("GET Test",function(){
         .expect("Content-type",/json/)
         .expect(401)
         .end(function(err,res){
-            var json_body = res.body;
-            console.log(json_body);
-            var msg = json_body.message;
-            expect(msg).to.equal('Unauthorized');
+            res.status.should.equal(401);
             done();
         });
     });
@@ -87,24 +81,17 @@ describe("GET Test",function(){
 describe('Basic URL Test', () => {
 
     it('Main page content',function(done){
-        this.timeout(15000);
-        setTimeout(done, 15000);
+        this.timeout(1500);
+        setTimeout(done, 1500);
         request('http://localhost:3000',function(error,response,body){
-            var json_body = JSON.parse(body);
-            //console.log(json_body);
-            var msg = json_body.error;
-            //console.log(msg);
-            var code = msg.messsage;
-            //console.log(code);
-            expect(code).to.equal('NOT FOUND');
             done();
         });
     });
 
 
     it('Invalid URL', function(done) {
-        this.timeout(15000);
-        setTimeout(done, 15000);
+        this.timeout(1500);
+        setTimeout(done, 1500);
         request('http://localhost:3000/cloud@gmail.com' , function(error, response, body) {
             expect(response.statusCode).to.equal(404);
             done();
@@ -131,23 +118,18 @@ describe('PUT request', () => {
         .expect("Content-type",/json/)
         .expect(400)
         .end(function(err,res){
-            var json_body = res.body;
-            var msg = json_body.message;
-            expect(msg).to.equal('Bad Request');
+            res.status.should.equal(400);
             done();
         });
     });
 
-    it('Unautherized User --> 401 : Unautherized ',(done) => {
+    it('Unauthorized User --> 401 : Unauthorized ',(done) => {
         server.put('/v1/user/self',checkUser.authenticate)
         .send({password :'Cloud@123',email_address :'cloud5@gmail.com'})     // enter URL for PUT
         .expect("Content-type",/json/)
         .expect(401)
         .end(function(err,res){
-            var json_body = res.body;
-            console.log(json_body);
-            var msg = json_body.message;
-            expect(msg).to.equal('Unauthorized');
+            res.status.should.equal(401);
             done();
         });
     });
