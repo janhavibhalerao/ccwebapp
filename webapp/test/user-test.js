@@ -81,8 +81,8 @@ describe("GET Test",function(){
 describe('Basic URL Test', () => {
 
     it('Main page content',function(done){
-        this.timeout(15000);
-        setTimeout(done, 15000);
+        this.timeout(1500);
+        setTimeout(done, 1500);
         request('http://localhost:3000',function(error,response,body){
             done();
         });
@@ -90,8 +90,8 @@ describe('Basic URL Test', () => {
 
 
     it('Invalid URL', function(done) {
-        this.timeout(15000);
-        setTimeout(done, 15000);
+        this.timeout(1500);
+        setTimeout(done, 1500);
         request('http://localhost:3000/cloud@gmail.com' , function(error, response, body) {
             expect(response.statusCode).to.equal(404);
             done();
@@ -123,7 +123,7 @@ describe('PUT request', () => {
         });
     });
 
-    it('Unautherized User --> 401 : Unautherized ',(done) => {
+    it('Unauthorized User --> 401 : Unauthorized ',(done) => {
         server.put('/v1/user/self',checkUser.authenticate)
         .send({password :'Cloud@123',email_address :'cloud5@gmail.com'})     // enter URL for PUT
         .expect("Content-type",/json/)

@@ -12,35 +12,43 @@ const { check, validationResult } = require('express-validator');
 
 router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) => {
     if (res.locals.user) {
-        mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, result) => {
-            if (result[0] != null) {
-                if (result[0].author_id === res.locals.user.id) {
-                    let contentType = req.headers['content-type'];
-                    if (contentType == 'application/json') {
-                        let validationFail = validationResult(req);
-                        if (!validationFail.isEmpty()) {
-                            return res.sendStatus(400);
-                        }
-                        else {
-                            let steps = req.body.steps;
-                            let hi = 0;
-                            let ordered = true;
-                            let positionArr = [];
+        if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
+            || req.body.id != null || req.body.total_time_in_min != null) {
+            console.log("This is the issue");    
+            return res.status(400).json();
+        } else {
 
-                            steps.forEach(element => {
-                                positionArr.push(element.position);
-                                if (element.position > hi) {
-                                    hi = element.position
-                                }
-                            });
-                            if (new Set(positionArr).size !== positionArr.length) ordered = false;
-                            else if (hi !== steps.length) ordered = false;
+            mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, result) => {
+                if (result[0] != null) {
+                    if (result[0].author_id === res.locals.user.id) {
+                        let contentType = req.headers['content-type'];
+                        if (contentType == 'application/json') {
+                            let validationFail = validationResult(req);
+                            if (!validationFail.isEmpty()) {
+                                return res.status(400).json();
+                            }
+                            else {
+                                let steps = req.body.steps;
+                                let hi = 0;
+                                let ordered = true;
+                                let positionArr = [];
 
-                            if (ordered) {
-                                let prepTime = parseInt(req.body.prep_time_in_min);
-                                let cookTime = parseInt(req.body.cook_time_in_min);
-                                let totalTimeForPrep = prepTime + cookTime;
-                                mysql.query(`UPDATE RMS.Recipe SET 
+                                steps.forEach(element => {
+                                    positionArr.push(element.position);
+                                    if (element.position > hi) {
+                                        hi = element.position
+                                    }
+                                });
+                                if (new Set(positionArr).size !== positionArr.length) ordered = false;
+                                else if (hi !== steps.length) ordered = false;
+
+                                if (ordered) {
+                                    let prepTime = parseInt(req.body.prep_time_in_min);
+                                    let cookTime = parseInt(req.body.cook_time_in_min);
+                                    let totalTimeForPrep = prepTime + cookTime;
+                                    let updTimeStamp =  moment().format('YYYY-MM-DD HH:mm:ss');
+                                    let crtTimeStamp = localTime(result[0].created_ts);
+                                    mysql.query(`UPDATE RMS.Recipe SET 
                                 cook_time_in_min =(?),
                                 prep_time_in_min =(?), 
                                 total_time_in_min=(?),
@@ -52,61 +60,62 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                 nutrition_information=(?),
                                 updated_ts=(?)
                                 WHERE id = (?)`,
-                                    [cookTime,
-                                        prepTime,
-                                        totalTimeForPrep,
-                                        req.body.title,
-                                        req.body.cusine,
-                                        req.body.servings,
-                                        JSON.stringify(req.body.ingredients),
-                                        JSON.stringify(req.body.steps),
-                                        JSON.stringify(req.body.nutrition_information),
-                                        moment().format('YYYY-MM-DD HH:mm:ss'),
-                                        req.params.id],
-                                    (err, results) => {
-                                        if (err) {
-                                            console.log(err);
-                                            return res.sendStatus(404);
-                                        }
-                                        else {
-                                            return res.json({
-                                                id: req.params.id,
-                                                created_ts: res.locals.user.created_ts,
-                                                updated_ts: res.locals.user.updated_ts,
-                                                author_id: res.locals.user.id,
-                                                cook_time_in_min: cookTime,
-                                                prep_time_in_min: prepTime,
-                                                total_time_in_min: totalTimeForPrep,
-                                                title: req.body.title,
-                                                cusine: req.body.cusine,
-                                                servings: req.body.servings,
-                                                ingredients: req.body.ingredients,
-                                                steps: req.body.steps,
-                                                nutrition_information: req.body.nutrition_information
-                                            });
-                                        }
-                                    })
-                            }
-                            else {
-                                res.sendStatus(400);
-                            }
+                                        [cookTime,
+                                            prepTime,
+                                            totalTimeForPrep,
+                                            req.body.title,
+                                            req.body.cusine,
+                                            req.body.servings,
+                                            JSON.stringify(req.body.ingredients),
+                                            JSON.stringify(req.body.steps),
+                                            JSON.stringify(req.body.nutrition_information),
+                                            updTimeStamp,
+                                            req.params.id],
+                                        (err, results) => {
+                                            if (err) {
+                                                console.log(err);
+                                                return res.status(404).json();
+                                            }
+                                            else {
+                                                return res.json({
+                                                    id: req.params.id,
+                                                    created_ts: crtTimeStamp,
+                                                    updated_ts: updTimeStamp,
+                                                    author_id: res.locals.user.id,
+                                                    cook_time_in_min: cookTime,
+                                                    prep_time_in_min: prepTime,
+                                                    total_time_in_min: totalTimeForPrep,
+                                                    title: req.body.title,
+                                                    cusine: req.body.cusine,
+                                                    servings: req.body.servings,
+                                                    ingredients: req.body.ingredients,
+                                                    steps: req.body.steps,
+                                                    nutrition_information: req.body.nutrition_information
+                                                });
+                                            }
+                                        })
+                                }
+                                else {
+                                    res.status(400).json();
+                                }
 
+                            }
                         }
-                    }
-                    else {
-                        res.sendStatus(400);
-                    }
+                        else {
+                            res.status(400).json();
+                        }
 
+                    } else {
+                        return res.status(401).json();
+                    }
                 } else {
-                    return res.status(401).json();
+                    return res.status(404).json();
                 }
-            } else {
-                return res.status(404).json();
-            }
-        });
+            });
+        }
     }
     else {
-        res.sendStatus(401);
+        res.status(401).json();
     }
 });
 
