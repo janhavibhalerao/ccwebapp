@@ -13,6 +13,10 @@ variable "vpc_tenancy" {
   default = "default"
 }
 
-variable "subnet_cidr" {
+variable "subnet_cidrs" {
+  description = "Subnet CIDRs for public subnets (length must match configured availability_zones)"
+  # this could be further simplified / computed using cidrsubnet() etc.
+  # https://www.terraform.io/docs/configuration/interpolation.html#cidrsubnet-iprange-newbits-netnum-
+  default = ["10.0.10.0/24", "10.0.20.0/24"]
   type = list(string)
 }

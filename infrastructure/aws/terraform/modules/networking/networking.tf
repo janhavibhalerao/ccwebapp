@@ -15,31 +15,33 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-resource "aws_subnet" "subnet1" {
-  vpc_id     = "${aws_vpc.main.id}"
-  cidr_block = "${var.subnet_cidr[0]}"
-  availability_zone = "${data.aws_availability_zones.available.names[0]}"
-  tags = {
-    Name = "Subnet1"
-  }
+resource "aws_subnet" "public" {
+  count = "${length(var.subnet_cidrs)}"
+  vpc_id = "${aws_vpc.main.id}"
+  cidr_block = "${var.subnet_cidrs[count.index]}"
+  availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
+  tags = "${map("Name", "subnet-${count.index}")}"
 }
 
-resource "aws_subnet" "subnet2" {
-  vpc_id     = "${aws_vpc.main.id}"
-  cidr_block = "${var.subnet_cidr[1]}"
-  availability_zone = "${data.aws_availability_zones.available.names[1]}"
-  tags = {
-    Name = "Subnet2"
-  }
+resource "aws_internet_gateway" "vpc-igw" {
+  vpc_id = "${aws_vpc.main.id}"
+  tags = "${map("Name", var.vpc_igw)}"
 }
 
-resource "aws_subnet" "subnet3" {
-  vpc_id     = "${aws_vpc.main.id}"
-  cidr_block = "${var.subnet_cidr[2]}"
-  availability_zone = "${data.aws_availability_zones.available.names[2]}"
-  tags = {
-    Name = "Subnet3"
+resource "aws_route_table" "public-rt" {
+  vpc_id = "${aws_vpc.main.id}"
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_internet_gateway.vpc-igw.id}"
   }
+  tags = "${map("Name", var.public_rt)}"
+}
+
+resource "aws_route_table_association" "public" {
+  count = "${length(var.subnet_cidrs)}"
+  subnet_id      = "${element(aws_subnet.public.*.id, count.index)}"
+  route_table_id = "${aws_route_table.public-rt.id}"
 }
 
 output "vpc_id" {
