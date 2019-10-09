@@ -76,7 +76,8 @@ echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 aws ec2 describe-route-tables \
     --query 'RouteTables[*].Associations[].{RouteTableAssociationId:RouteTableAssociationId}' \
     --route-table-id $Route_Table_Id1 \
-    --output text|while read var_Associate; do aws ec2 disassociate-route-table --association-id $var_Associate; done
+    --output text 
+while read var_Associate; do aws ec2 disassociate-route-table --association-id $var_Associate; done
 
 echo "Deassociated subnets from Routing Table"
 
