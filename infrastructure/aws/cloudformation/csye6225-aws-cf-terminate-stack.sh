@@ -1,19 +1,17 @@
-STACK_NAME=$1
+aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE||CREATE_IN_PROGRESS||REVIEW_IN_PROGRESS||DELETE_IN_PROGRESS||DELETE_FAILED||UPDATE_IN_PROGRESS||DELETE_COMPLETE
 
-aws cloudformation list-stack-resources --stack-name $STACK_NAME
+echo "Enter the stack name to be terminated:"
+read s_name
+
+echo "Stack:$s_name - Termination in progress..."
+
+aws cloudformation delete-stack --stack-name $s_name
 if [ $? -ne "0" ]
-	then 
-	echo "Nothing to terminate as Stack does not exist!"
-	exit 1
-	fi
-
-aws cloudformation delete-stack --stack-name $STACK_NAME
-
-aws cloudformation wait stack-delete-complete --stack-name $STACK_NAME
-
-if [ $? -ne "0" ]
-then 
-	echo "Termination of AWS CloudFormation Stack Failed!"
-else
-	echo "Termination of AWS CloudFormation Stack is Successful!"
+then
+  echo "Stack:$s_name - Does not exist!"
+  exit 1
 fi
+
+aws cloudformation wait stack-delete-complete --stack-name $s_name
+
+echo "Stack:$s_name - Terminated successfully!"
