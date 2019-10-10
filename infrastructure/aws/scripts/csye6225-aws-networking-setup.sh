@@ -5,17 +5,21 @@
 #
 # Ask user for AWS region,VPC CIDR block,Subnet CIDR block,VPC name.
 
-
+echo "welocme";
 echo "Please Enter valid AWS Region"; read REGION;
 echo "Please Enter valid VPC CIDR block"; read VPCcidr;
+echo "Please Enter valid VPC Name"; read Profile;
 
 
 #=============================================================
 #Set the Required parameters
 #=============================================================
 Region="$REGION"
+echo $Region
 internet_Gateway_Name="csye6225-InternetGateway"
 vpc_cidr="$VPCcidr"
+echo $vpc_cidr
+profile=$Profile
 public_Route_Table_Name="csye6225-publicRouteTable"
 zone1="us-east-1a"
 zone2="us-east-1b"
@@ -23,7 +27,7 @@ zone3="us-east-1c"
 public_subnet1_name="csye6225-PublicSubnet-1"
 public_subnet2_name="csye6225-PublicSubnet-2"
 public_subnet3_name="csye6225-PublicSubnet-3"
-default_ip="0.0.0.0./0"
+default_ip="0.0.0.0/0"
 security_group="csye6225-SecurityGroup"
 
 
@@ -37,17 +41,13 @@ echo "Please Enter valid VPC Name"; read VPCName;
 vpcName="$VPCName"
 echo " "
 
-vpc_id=$(aws ec2 create-vpc \ 
-    --cidr-block $vpc_cidr \
-    --query 'Vpc.{VpcId:VpcId}' \
-    --output json \
-    --region $Region)
+vpc_id=$(aws ec2 create-vpc --cidr-block $vpc_cidr --query 'Vpc.{VpcId:VpcId}' --output text --region $Region --profile $profile)
 
 VPC_CREATE_STATUS=$?
 echo ""
 
 if [ $VPC_CREATE_STATUS -eq 0 ]; then
-    echo "vpcID : '$vpc_id' created in '$Region' region."
+    echo "vpcID : $vpc_id created in '$Region' region."
 else
     echo "vpc creation status : '$VPC_CREATE_STATUS', Error:VPC creation command failed!!"
     exit $VPC_CREATE_STATUS
@@ -60,10 +60,8 @@ fi
 echo "VPC: Name Tag"
 echo "========================================================"
 
-vpcRename=$(aws ec2 create-tags \
-    --resources $vpc_id \
-    --tags "Key=Name,Value=$vpcName" \
-    --region $Region 2>&1)  
+vpcRename=$(aws ec2 create-tags --resources $vpc_id --tags "Key=Name,Value=$vpcName" --region us-east-1 --profile dev)
+
 VPC_RENAME_STATUS=$?
 
 if [ $VPC_RENAME_STATUS -eq 0 ]; then
@@ -89,8 +87,9 @@ SUBNET_1_ID=$(aws ec2 create-subnet \
     --cidr-block $CIDR_Block1 \
     --availability-zone $zone1 \
     --query 'Subnet.{SubnetId:SubnetId}' \
-    --output json \
-    --region $Region)
+    --output text \
+    --region $Region \
+    --profile $profile)
 
 
 SUBNET1_CREATE_STATUS=$?
@@ -112,7 +111,8 @@ echo "Subnet 1: Name Tag"
 echo "========================================================"
 SUBNET1_RENAME=$(aws ec2 create-tags \
     --resource $SUBNET_1_ID \
-    --tags "Key=Name,Value="$public_subnet1_name 2>&1)
+    --tags "Key=Name,Value="$public_subnet1_name 2>&1 \
+    --profile $profile)
 
 SUBNET1_RENAME_STATUS=$?
 
@@ -135,8 +135,9 @@ SUBNET_2_ID=$(aws ec2 create-subnet \
     --cidr-block $CIDR_Block2 \
     --availability-zone $zone2 \
     --query 'Subnet.{SubnetId:SubnetId}' \
-    --output json \
-    --region $Region)
+    --output text \
+    --region $Region \
+    --profile $profile)
 
 
 SUBNET2_CREATE_STATUS=$?
@@ -158,7 +159,8 @@ echo "Subnet 2: Name Tag"
 echo "========================================================"
 SUBNET2_RENAME=$(aws ec2 create-tags \
     --resource $SUBNET_2_ID \
-    --tags "Key=Name,Value="$public_subnet2_name 2>&1)
+    --tags "Key=Name,Value="$public_subnet2_name 2>&1 \
+    --profile $profile)
 
 SUBNET2_RENAME_STATUS=$?
 
@@ -180,8 +182,9 @@ SUBNET_3_ID=$(aws ec2 create-subnet \
     --cidr-block $CIDR_Block3 \
     --availability-zone $zone3 \
     --query 'Subnet.{SubnetId:SubnetId}' \
-    --output json \
-    --region $Region)
+    --output text \
+    --region $Region \
+    --profile $profile)
 
 
 SUBNET3_CREATE_STATUS=$?
@@ -203,7 +206,8 @@ echo "Subnet 3: Name Tag"
 echo "========================================================"
 SUBNET3_RENAME=$(aws ec2 create-tags \
     --resource $SUBNET_3_ID \
-    --tags "Key=Name,Value="$public_subnet3_name 2>&1)
+    --tags "Key=Name,Value="$public_subnet3_name 2>&1 \
+    --profile $profile)
 
 SUBNET3_RENAME_STATUS=$?
 
@@ -224,8 +228,9 @@ echo "========================================================"
 
 Internet_Gateway_ID=$(aws ec2 create-internet-gateway \
     --query 'InternetGateway.{InternetGatewayId:InternetGatewayId'}\
-    --output json \
-    --region $Region 2>&1)
+    --output text \
+    --region $Region 2>&1 \
+    --profile $profile)
 Internet_gateway_create_status=$?
 
 if [ $Internet_gateway_create_status -eq 0 ]; then
@@ -245,7 +250,8 @@ echo "========================================================"
 
 Internet_gateway_rename=$(aws ec2 create-tags \
     --resources $Internet_Gateway_ID \
-    --tags "Key=Name,Value=$internet_Gateway_Name" 2>&1)
+    --tags "Key=Name,Value=$internet_Gateway_Name" 2>&1 \
+    --profile $profile)
 
 Internet_Gateway_Rename_Status=$?
 
@@ -267,7 +273,8 @@ echo "========================================================"
 Internet_Gateway_Attach=$(aws ec2 attach-internet-gateway \
     --vpc-id $vpc_id \
     --internet-gateway-id $Internet_Gateway_ID \
-    --region $Region 2>&1)
+    --region $Region 2>&1 \
+    --profile $profile)
 Internet_Gateway_Attach_Status=$?
 
 if [ $Internet_Gateway_Attach_Status -eq 0 ]; then
@@ -287,8 +294,9 @@ echo "========================================================"
 Route_Table_ID=$(aws ec2 create-route-table \
     --vpc-id $vpc_id \
     --query "RouteTable.{RouteTableId:RouteTableId}" \
-    --output json \
-    --region $Region 2>&1)
+    --output text \
+    --region $Region 2>&1 \
+    --profile $profile)
 
 Route_Table_Create_Status=$?
 
@@ -309,7 +317,8 @@ echo "========================================================"
 
 Route_Table_rename=$(aws ec2 create-tags \
     --resources $Route_Table_ID \
-    --tags "Key=Name,Value=$public_Route_Table_Name" 2>&1)
+    --tags "Key=Name,Value=$public_Route_Table_Name" 2>&1 \
+    --profile $profile)
 
 Route_Table_Rename_Status=$?
 
@@ -330,10 +339,11 @@ echo "Create a public route in the public route table created above with destina
 echo "========================================================================================================================================================"
 
 Route_to_IG=$(aws ec2 create-route \
-    --route-table-id $Route_table_ID \
+    --route-table-id $Route_Table_ID \
     --destination-cidr-block 0.0.0.0/0 \
     --gateway-id $Internet_Gateway_ID \
-    --region $Region)
+    --region $Region \
+    --profile $profile)
 
 Route_to_IG_status=$?
 
@@ -356,8 +366,9 @@ echo "Subnet 1"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 Associate_Subnet1=$(aws ec2 associate-route-table \
     --subnet-id $SUBNET_1_ID \
-    --route-table-id $Route_table_ID \
-    --region $Region)
+    --route-table-id $Route_Table_ID \
+    --region $Region \
+    --profile $profile)
 
 Associate_Subnet1_status=$?
 
@@ -374,8 +385,9 @@ echo "Subnet 2"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 Associate_Subnet1=$(aws ec2 associate-route-table \
     --subnet-id $SUBNET_2_ID \
-    --route-table-id $Route_table_ID \
-    --region $Region)
+    --route-table-id $Route_Table_ID \
+    --region $Region \
+    --profile $profile)
 
 Associate_Subnet2_status=$?
 
@@ -392,8 +404,9 @@ echo "Subnet 3"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 Associate_Subnet1=$(aws ec2 associate-route-table \
     --subnet-id $SUBNET_3_ID \
-    --route-table-id $Route_table_ID \
-    --region $Region)
+    --route-table-id $Route_Table_ID \
+    --region $Region \
+    --profile $profile)
 
 Associate_Subnet3_status=$?
 
