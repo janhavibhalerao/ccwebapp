@@ -8,7 +8,7 @@
 
 echo "Please Enter valid AWS Region"; read REGION;
 echo "Please Enter valid VPC Name"; read VPCName;
-echo "Please Enter valid VPC Name"; read Profile;
+echo "Please Enter valid profile"; read Profile;
 echo " "
 
 
