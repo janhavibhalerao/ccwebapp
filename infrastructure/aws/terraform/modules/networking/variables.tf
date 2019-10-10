@@ -18,12 +18,16 @@ variable "vpc_igw" {
   default = "vpc-igw"
 }
 
-variable "subnet_cidrs" {
-  description = "Subnet CIDRs for public subnets (length must match configured availability_zones)"
-  # this could be further simplified / computed using cidrsubnet() etc.
-  # https://www.terraform.io/docs/configuration/interpolation.html#cidrsubnet-iprange-newbits-netnum-
-  default = ["10.0.10.0/24", "10.0.20.0/24"]
-  type = list(string)
+variable "subnet3_cidr" {
+  type = string
+}
+
+variable "subnet2_cidr" {
+  type = string
+}
+
+variable "subnet1_cidr" {
+  type = string
 }
 
 variable "public_rt" {

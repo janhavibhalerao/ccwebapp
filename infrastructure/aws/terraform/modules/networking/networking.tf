@@ -15,17 +15,30 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-resource "aws_subnet" "public" {
-  count = "${length(var.subnet_cidrs)}"
+resource "aws_subnet" "subnet1" {
   vpc_id = "${aws_vpc.main.id}"
-  cidr_block = "${var.subnet_cidrs[count.index]}"
-  availability_zone = "${data.aws_availability_zones.available.names[count.index]}"
-  tags = "${map("Name", "subnet-${count.index}")}"
+  cidr_block = "${var.subnet1_cidr}"
+  availability_zone = "${data.aws_availability_zones.available.names[0]}"
+  tags = "${map("Name", "subnet1-${var.vpc_name}")}"
+}
+
+resource "aws_subnet" "subnet2" {
+  vpc_id = "${aws_vpc.main.id}"
+  cidr_block = "${var.subnet2_cidr}"
+  availability_zone = "${data.aws_availability_zones.available.names[1]}"
+  tags = "${map("Name", "subnet2-${var.vpc_name}")}"
+}
+
+resource "aws_subnet" "subnet3" {
+  vpc_id = "${aws_vpc.main.id}"
+  cidr_block = "${var.subnet3_cidr}"
+  availability_zone = "${data.aws_availability_zones.available.names[2]}"
+  tags = "${map("Name", "subnet3-${var.vpc_name}")}"
 }
 
 resource "aws_internet_gateway" "vpc-igw" {
   vpc_id = "${aws_vpc.main.id}"
-  tags = "${map("Name", var.vpc_igw)}"
+  tags = "${map("Name", "${var.vpc_igw}-${var.vpc_name}")}"
 }
 
 resource "aws_route_table" "public-rt" {
@@ -35,12 +48,21 @@ resource "aws_route_table" "public-rt" {
     cidr_block = "0.0.0.0/0"
     gateway_id = "${aws_internet_gateway.vpc-igw.id}"
   }
-  tags = "${map("Name", var.public_rt)}"
+  tags = "${map("Name", "${var.public_rt}-${var.vpc_name}")}"
 }
 
-resource "aws_route_table_association" "public" {
-  count = "${length(var.subnet_cidrs)}"
-  subnet_id      = "${element(aws_subnet.public.*.id, count.index)}"
+resource "aws_route_table_association" "rtasc1" {
+  subnet_id      = "${aws_subnet.subnet1.id}"
+  route_table_id = "${aws_route_table.public-rt.id}"
+}
+
+resource "aws_route_table_association" "rtasc2" {
+  subnet_id      = "${aws_subnet.subnet2.id}"
+  route_table_id = "${aws_route_table.public-rt.id}"
+}
+
+resource "aws_route_table_association" "rtasc3" {
+  subnet_id      = "${aws_subnet.subnet3.id}"
   route_table_id = "${aws_route_table.public-rt.id}"
 }
 
