@@ -105,7 +105,7 @@
                 },
                 "Tags": [
                     {
-                        "Key": "name",
+                        "Key": "Name",
                         "Value": {
                             "Fn::Join": [
                                 "",
@@ -145,7 +145,7 @@
                 },
                 "Tags": [
                     {
-                        "Key": "name",
+                        "Key": "Name",
                         "Value": {
                             "Fn::Join": [
                                 "",
@@ -185,7 +185,7 @@
                 },
                 "Tags": [
                     {
-                        "Key": "name",
+                        "Key": "Name",
                         "Value": {
                             "Fn::Join": [
                                 "",
