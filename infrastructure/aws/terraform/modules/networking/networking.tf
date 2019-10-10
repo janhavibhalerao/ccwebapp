@@ -3,7 +3,7 @@ provider "aws" {
   version = "~> 2.31"
 }
 
- resource "aws_vpc" "main" {
+resource "aws_vpc" "main" {
   cidr_block       = "${var.vpc_cidr}"
   instance_tenancy = "${var.vpc_tenancy}"
   tags = "${map("Name", var.vpc_name)}"
@@ -54,6 +54,7 @@ resource "aws_route_table" "public-rt" {
 resource "aws_route_table_association" "rtasc1" {
   subnet_id      = "${aws_subnet.subnet1.id}"
   route_table_id = "${aws_route_table.public-rt.id}"
+  
 }
 
 resource "aws_route_table_association" "rtasc2" {
@@ -64,8 +65,4 @@ resource "aws_route_table_association" "rtasc2" {
 resource "aws_route_table_association" "rtasc3" {
   subnet_id      = "${aws_subnet.subnet3.id}"
   route_table_id = "${aws_route_table.public-rt.id}"
-}
-
-output "vpc_id" {
-  value = "${aws_vpc.main.id}"
 }

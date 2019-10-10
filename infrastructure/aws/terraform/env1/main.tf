@@ -1,5 +1,5 @@
 module "main_vpc" {
-    source = "./modules/networking"
+    source = "../modules/networking"
     aws_region = "${var.aws_region}"
     vpc_cidr = "${var.vpc_cidr}"
     subnet1_cidr = "${var.subnet1_cidr}"
