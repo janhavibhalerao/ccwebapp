@@ -125,7 +125,7 @@ echo "Detached Internet Gateway"
 echo "Deleting Internet Gateway"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 aws ec2 delete-internet-gateway \
-    --internet-getway-id $InternetGateway_Id \
+    --internet-gateway-id $InternetGateway_Id \
     --profile $profile
 echo "Internet Gateway Deleted"
 
