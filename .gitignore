@@ -2,7 +2,6 @@
 webapp/node_modules
 #ignore npm-debug.log
 npm-debug.log
-
 # Compiled files
 *.tfstate
 *.tfstate.backup
