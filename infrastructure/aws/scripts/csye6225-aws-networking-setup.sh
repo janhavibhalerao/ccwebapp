@@ -6,7 +6,7 @@
 # Ask user for AWS region,VPC CIDR block,Subnet CIDR block,VPC name.
 echo "Please Enter valid AWS Region"; read REGION;
 echo "Please Enter valid VPC CIDR block"; read VPCcidr;
-echo "Please Enter valid VPC Name"; read Profile;
+echo "Please Enter valid profile"; read Profile;
 
 
 #=============================================================
