@@ -4,8 +4,7 @@ const mysql = require('mysql');
 var con = mysql.createConnection({
     host: process.env.MYSQLHOST,
     user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD,
-    database: process.env.DATABASE
+    password: process.env.MYSQLPASSWORD
 });
 
 con.connect(function (err) {

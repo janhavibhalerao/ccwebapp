@@ -14,7 +14,6 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
     if (res.locals.user) {
         if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
             || req.body.id != null || req.body.total_time_in_min != null) {
-            console.log("This is the issue");    
             return res.status(400).json({ msg: 'Invalid Request body' });
         } else {
 
@@ -73,7 +72,6 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                             req.params.id],
                                         (err, results) => {
                                             if (err) {
-                                                console.log(err);
                                                 return res.status(404).json({ msg: 'Not Found' });
                                             }
                                             else {
