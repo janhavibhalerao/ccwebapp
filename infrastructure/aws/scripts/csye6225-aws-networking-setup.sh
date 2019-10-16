@@ -3,25 +3,76 @@
 # create VPC using AWS-CLI
 #====================================================
 #
-# Ask user for AWS region,VPC CIDR block,Subnet CIDR block,VPC name.
-echo "Please Enter valid AWS Region"; read REGION;
-echo "Please Enter valid VPC CIDR block"; read VPCcidr;
-echo "Please Enter valid profile"; read Profile;
+# regex for validations.
+vpc_regex='^(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$'
+
+#===================================================
+
+if [ $# -ne 7 ] 
+    then
+        echo "Scrip required seven command line argument." 
+        echo "sh csye6225-aws-networking-setup.sh <region> <profile> <VPCName> <vpccidr> <subnet1cidr> <subnet2cidr> <subnet3cidr>"
+        exit 1
+fi
+
+
+#=============================================================
+#Get the Required parameters
+#=============================================================
+Region="$1"
+profile="$2"
+vpcName="$3"
+vpc_cidr=$4
+CIDR_Block1=$5
+CIDR_Block2=$6
+CIDR_Block3=$7
+
+#=============================================================
+#Validate cidr blocks
+#=============================================================
+
+if ! [[ "$vpc_cidr" =~ $vpc_regex ]]
+then
+    echo "Invalid CIDR : Please Enter valid VPC CIDR block <x.x.x.x/x>"
+    exit 1
+elif ! [[ "$CIDR_Block1" =~ $vpc_regex ]]
+then
+    echo "Invalid CIDR : Please Enter valid subnet1 CIDR block <x.x.x.x/x>"
+    exit 1
+elif ! [[ "$CIDR_Block2" =~ $vpc_regex ]]
+then
+    echo "Invalid CIDR : Please Enter valid subnet2 CIDR block <x.x.x.x/x>"
+    exit 1
+elif ! [[ "$CIDR_Block3" =~ $vpc_regex ]]
+then
+    echo "Invalid CIDR : Please Enter valid subnet3 CIDR block <x.x.x.x/x>"
+    exit 1
+elif [[ "$CIDR_Block1" == "$CIDR_Block2" ]] || [[ "$CIDR_Block1" == "$CIDR_Block3" ]] || [[ "$CIDR_Block3" == "$CIDR_Block2" ]]
+then   
+    echo "Cannot Use Same CIDR Block for two subnets"
+    exit 1
+fi
 
 
 #=============================================================
 #Set the Required parameters
 #=============================================================
-Region="$REGION"
-echo $Region
+
 internet_Gateway_Name="csye6225-InternetGateway"
-vpc_cidr="$VPCcidr"
-echo $vpc_cidr
-profile=$Profile
 public_Route_Table_Name="csye6225-publicRouteTable"
-zone1="us-east-1a"
-zone2="us-east-1b"
-zone3="us-east-1c"
+
+#change one
+if [[ $Region == "us-east-1" ]]; then
+    zone1="us-east-1a"
+    zone2="us-east-1b"
+    zone3="us-east-1c"
+elif [[ $Region == "us-east-2" ]]; then
+    zone1="us-east-2a"
+    zone2="us-east-2b"
+    zone3="us-east-2c"
+fi
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 public_subnet1_name="csye6225-PublicSubnet-1"
 public_subnet2_name="csye6225-PublicSubnet-2"
 public_subnet3_name="csye6225-PublicSubnet-3"
@@ -35,8 +86,6 @@ security_group="csye6225-SecurityGroup"
 
 echo "Creating AWS EC2 VPC"
 echo "========================================================"
-echo "Please Enter valid VPC Name"; read VPCName;
-vpcName="$VPCName"
 echo " "
 
 vpc_id=$(aws ec2 create-vpc --cidr-block $vpc_cidr --query 'Vpc.{VpcId:VpcId}' --output text --region $Region --profile $profile)
@@ -58,7 +107,7 @@ fi
 echo "VPC: Name Tag"
 echo "========================================================"
 
-vpcRename=$(aws ec2 create-tags --resources $vpc_id --tags "Key=Name,Value=$vpcName" --region us-east-1 --profile dev)
+vpcRename=$(aws ec2 create-tags --resources $vpc_id --tags "Key=Name,Value=$vpcName" --region $Region --profile $profile) # change two
 
 VPC_RENAME_STATUS=$?
 
@@ -78,7 +127,6 @@ fi
 
 echo "Create Subnet 1       Different Availability Zones || Same VPC || Same Region"
 echo "========================================================"
-echo "Please Enter CIDR Block for Subnet 1 (x.x.x.x/x)"; read CIDR_Block1;
 
 SUBNET_1_ID=$(aws ec2 create-subnet \
     --vpc-id $vpc_id \
@@ -126,7 +174,6 @@ fi
 
 echo "Create Subnet 2       Different Availability Zones || Same VPC || Same Region"
 echo "========================================================"
-echo "Please Enter CIDR Block for Subnet 2 (x.x.x.x/x)"; read CIDR_Block2;
 
 SUBNET_2_ID=$(aws ec2 create-subnet \
     --vpc-id $vpc_id \
@@ -173,7 +220,6 @@ fi
 
 echo "Create Subnet 3       Different Availability Zones || Same VPC || Same Region"
 echo "========================================================"
-echo "Please Enter CIDR Block for Subnet 3 (x.x.x.x/x)"; read CIDR_Block3;
 
 SUBNET_3_ID=$(aws ec2 create-subnet \
     --vpc-id $vpc_id \
@@ -254,7 +300,7 @@ Internet_gateway_rename=$(aws ec2 create-tags \
 Internet_Gateway_Rename_Status=$?
 
 if [ $Internet_Gateway_Rename_Status -eq 0 ]; then
-    echo "Internet Gateway ID: $Internet_Gateway_ID tagged to: '$Internet_gateway_rename'"
+    echo "Internet Gateway ID: $Internet_Gateway_ID tagged to: '$internet_Gateway_Name'"
 else
     echo "InternetGateway NameTag Status : '$Internet_Gateway_Rename_Status', Error:Internet Gateway Rename Command Failed!!"
     exit $Internet_Gateway_Rename_Status
