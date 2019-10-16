@@ -33,7 +33,7 @@ router.put('/self', checkUser.authenticate, (req, res) => {
                          });
                     }
                     if (id != null || email_address != null || account_created != null || account_updated != null) {
-                         return res.status(400).json({ msg: 'found null value for ID/EmailAddress/accountCreated/accountDeleted' });
+                         return res.status(400).json({ msg: 'Invalid request body' });
                     } else {
                          let update_set = Object.keys(req.body).map(value => {
                               return ` ${value}  = "${req.body[value]}"`;
