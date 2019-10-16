@@ -8,7 +8,7 @@
 if [ $# -ne 3 ] 
     then
         echo "Scrip required three command line argument." 
-        echo "sh csye6225-aws-networking-setup.sh <region> <profile> <VPCName>"
+        echo "sh csye6225-aws-networking-teardown-setup.sh <region> <profile> <VPCName>"
         exit 1
 fi
 
