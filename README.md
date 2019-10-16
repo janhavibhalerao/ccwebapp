@@ -20,6 +20,7 @@
 * Clone or download repository
 * On terminal navigate to path :csye6225/dev/ccwebapps/webapp
 * Run npm install, npm start to start node server
+* If DB doesnt exist then run npm schema to create it
 * In Postman:
 * User:
 1. POST request: localhost:3000/v1/user
