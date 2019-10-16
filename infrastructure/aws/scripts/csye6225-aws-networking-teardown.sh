@@ -5,40 +5,30 @@
 #
 # Ask user for AWS region,VPC CIDR block,Subnet CIDR block,VPC name.
 
-
-echo "Please Enter valid AWS Region"; read REGION;
-echo "Please Enter valid VPC Name"; read VPCName;
-echo "Please Enter valid profile"; read Profile;
-echo " "
-
+if [ $# -ne 3 ] 
+    then
+        echo "Scrip required three command line argument." 
+        echo "sh csye6225-aws-networking-teardown-setup.sh <region> <profile> <VPCName>"
+        exit 1
+fi
 
 #=============================================================
 #Set the Required parameters
 #=============================================================
 
-AWS_Region=$REGION;
-profile=$Profile;
-#=============================================================
-#Get VPC Name
-#=============================================================
-echo "Getting VPC Name "
-echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-
-VPC_Name=$(aws ec2 describe-vpcs \
-    --query "Vpcs[?Tags[?Key=='Name']|[?Value=='$VPCName']].Tag[0].Value" \
-    --output text \
-    --profile $profile)
-echo $VPC_Name
+AWS_Region="$1";
+profile="$2";
+vpcname="$3";
 
 #=============================================================
-#Get VPC ID
+#Get VPC ID from VPC name
 #=============================================================
 echo "Getting VPC ID "
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
 vpc_id=$(aws ec2 describe-vpcs \
     --query "Vpcs[*].{VpcId:VpcId}" \
-    --filters Name=is-default,Values=false \
+    --filters Name=tag:Name,Values=$vpcname \
     --output text \
     --region $AWS_Region \
     --profile $profile)
@@ -165,4 +155,3 @@ echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 
 aws ec2 delete-vpc --vpc-id $vpc_id --profile $profile
 echo "Deleted VPC"
-
