@@ -15,7 +15,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
         if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
             || req.body.id != null || req.body.total_time_in_min != null) {
             console.log("This is the issue");    
-            return res.status(400).json({ msg: 'Bad Request' });
+            return res.status(400).json({ msg: 'Found Null value for some field' });
         } else {
 
             mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, result) => {
@@ -25,7 +25,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                         if (contentType == 'application/json') {
                             let validationFail = validationResult(req);
                             if (!validationFail.isEmpty()) {
-                                return res.status(400).json({ msg: 'Bad Request' });
+                                return res.status(400).json({ msg: 'Express Validation failed' });
                             }
                             else {
                                 let steps = req.body.steps;
@@ -96,13 +96,13 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                         })
                                 }
                                 else {
-                                    res.status(400).json({ msg: 'Bad Request' });
+                                    res.status(400).json({ msg: 'steps are not in order' });
                                 }
 
                             }
                         }
                         else {
-                            res.status(400).json({ msg: 'Bad Request' });
+                            res.status(400).json({ msg: 'Request type must be JSON!' });
                         }
 
                     } else {
@@ -124,7 +124,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
     if (contentType == 'application/json') {
         let errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ msg: 'Bad Request' });
+            return res.status(400).json({ msg: 'Express validation failed' });
         } else {
             let steps = req.body.steps;
             let hi = 0;
@@ -159,7 +159,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                         JSON.stringify(req.body.nutrition_information)
                     ], (err, result) => {
                         if (err) {
-                            return res.status(400).json({ msg: 'Bad Request' });
+                            return res.status(400).json({ msg: 'insert value execution failed' });
                         }
                         else {
                             return res.status(201).json({
@@ -181,11 +181,11 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                         }
                     });
             } else {
-                return res.status(400).json({ msg: 'Bad Request' });
+                return res.status(400).json({ msg: 'steps are not in order' });
             }
         }
     } else {
-        return res.status(400).json({ msg: 'Bad Request' });
+        return res.status(400).json({ msg: 'Request type must be JSON!' });
     }
 });
 
@@ -195,7 +195,7 @@ router.get('/:id', (req, res) => {
     if (contentType == 'application/json') {
         mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, data) => {
             if (err) {
-                return res.status(400).json({ msg: 'Bad Request' });
+                return res.status(400).json({ msg: 'Invalide ID' });
             }
             else if (data[0] != null) {
                 data[0].created_ts = localTime(data[0].created_ts);
@@ -210,7 +210,7 @@ router.get('/:id', (req, res) => {
 
         });
     } else {
-        return res.status(400).json({ msg: 'Bad Request' });
+        return res.status(400).json({ msg: 'Request type must be JSON!' });
     }
 });
 
