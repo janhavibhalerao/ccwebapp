@@ -33,27 +33,27 @@ router.put('/self', checkUser.authenticate, (req, res) => {
                          });
                     }
                     if (id != null || email_address != null || account_created != null || account_updated != null) {
-                         return res.status(400).json();
+                         return res.status(400).json({ msg: 'found null value for ID/EmailAddress/accountCreated/accountDeleted' });
                     } else {
                          let update_set = Object.keys(req.body).map(value => {
                               return ` ${value}  = "${req.body[value]}"`;
                          });
                          mysql.query(`UPDATE RMS.User SET ${update_set.join(" ,")}, account_updated=(?) WHERE email_address = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), res.locals.user.email_address], function (error, results) {
                               if (error) {
-                                   return res.status(400).json();
+                                   return res.status(400).json({ msg: "Update query execution failed" });
                               } else {
                                    return res.status(204).json();
                               }
                          });
                     }
                } else {
-                    return res.status(400).json();
+                    return res.status(400).json({ msg: 'Request type must be JSON!' });
                }
           } else {
-               return res.status(400).json();
+               return res.status(400).json({ msg: 'Bad Request' });
           }
      } else {
-          return res.status(401).json();
+          return res.status(401).json({ msg: 'Unauthorized' });
      }
 });
 
