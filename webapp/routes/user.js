@@ -8,7 +8,6 @@ const moment = require('moment');
 const mysql = require('../services/db');
 const saltRounds = 10;
 const checkUser = require('../services/auth');
-const localTime = require('../services/localTime');
 
 
 // protected routes
@@ -38,7 +37,7 @@ router.put('/self', checkUser.authenticate, (req, res) => {
                          let update_set = Object.keys(req.body).map(value => {
                               return ` ${value}  = "${req.body[value]}"`;
                          });
-                         mysql.query(`UPDATE RMS.User SET ${update_set.join(" ,")}, account_updated=(?) WHERE email_address = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), res.locals.user.email_address], function (error, results) {
+                         mysql.query(`UPDATE `+process.env.DATABASE+`.User SET ${update_set.join(" ,")}, account_updated=(?) WHERE email_address = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), res.locals.user.email_address], function (error, results) {
                               if (error) {
                                    return res.status(400).json({ msg: "Update query execution failed" });
                               } else {
@@ -61,8 +60,8 @@ router.put('/self', checkUser.authenticate, (req, res) => {
 router.get('/self', checkUser.authenticate, (req, res) => {
      if (res.locals.user) {
           res.statusCode = 200;
-          res.locals.user.account_created = localTime(res.locals.user.account_created);
-          res.locals.user.account_updated = localTime(res.locals.user.account_updated);
+          res.locals.user.account_created = res.locals.user.account_created;
+          res.locals.user.account_updated = res.locals.user.account_updated;
           res.setHeader('Content-Type', 'application/json');
           res.json(res.locals.user);
      }
@@ -86,7 +85,7 @@ router.post('/', (req, res, next) => {
                const account_created = moment().format('YYYY-MM-DD HH:mm:ss');
                const account_updated = moment().format('YYYY-MM-DD HH:mm:ss');
 
-               mysql.query('insert into RMS.User(`id`,`first_name`,`last_name`,`password`,`email_address`,`account_created`,`account_updated`)values(?,?,?,?,?,?,?)',
+               mysql.query('insert into '+process.env.DATABASE+'.User(`id`,`first_name`,`last_name`,`password`,`email_address`,`account_created`,`account_updated`)values(?,?,?,?,?,?,?)',
                     [id, first_name, last_name, hashedPassword, email_address, account_created, account_updated], (err, result) => {
                          if (err) {
                               return res.status(400).json({ msg: ` Email: ${email_address} already exists!` });
