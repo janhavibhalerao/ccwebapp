@@ -5,7 +5,6 @@ const uuid = require('uuid');
 const moment = require('moment');
 const mysql = require('../services/db');
 const checkUser = require('../services/auth');
-const localTime = require('../services/localTime');
 const { check, validationResult } = require('express-validator');
 
 // Protected routes
@@ -17,7 +16,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
             return res.status(400).json({ msg: 'Invalid Request body' });
         } else {
 
-            mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, result) => {
+            mysql.query('select * from '+process.env.DATABASE+'.Recipe where id=(?)', [req.params.id], (err, result) => {
                 if (result[0] != null) {
                     if (result[0].author_id === res.locals.user.id) {
                         let contentType = req.headers['content-type'];
@@ -46,8 +45,8 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                     let cookTime = parseInt(req.body.cook_time_in_min);
                                     let totalTimeForPrep = prepTime + cookTime;
                                     let updTimeStamp =  moment().format('YYYY-MM-DD HH:mm:ss');
-                                    let crtTimeStamp = localTime(result[0].created_ts);
-                                    mysql.query(`UPDATE RMS.Recipe SET 
+                                    let crtTimeStamp = result[0].created_ts;
+                                    mysql.query(`UPDATE `+process.env.DATABASE+`.Recipe SET 
                                 cook_time_in_min =(?),
                                 prep_time_in_min =(?), 
                                 total_time_in_min=(?),
@@ -143,7 +142,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                 let totalTimeForPrep = prepTime + cookTime;
                 let id = uuid();
                 let timeStamp = moment().format('YYYY-MM-DD HH:mm:ss');
-                mysql.query('insert into RMS.Recipe(`id`,`created_ts`,`updated_ts`,`author_id`,`cook_time_in_min`,`prep_time_in_min`, `total_time_in_min`,`title`,`cusine`, `servings`,`ingredients`,`steps`,`nutrition_information`)values(?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                mysql.query('insert into '+process.env.DATABASE+'.Recipe(`id`,`created_ts`,`updated_ts`,`author_id`,`cook_time_in_min`,`prep_time_in_min`, `total_time_in_min`,`title`,`cusine`, `servings`,`ingredients`,`steps`,`nutrition_information`)values(?,?,?,?,?,?,?,?,?,?,?,?,?)'
                     , [id, timeStamp, timeStamp,
                         res.locals.user.id,
                         prepTime,
@@ -191,13 +190,13 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
 router.get('/:id', (req, res) => {
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
-        mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, data) => {
+        mysql.query('select * from '+process.env.DATABASE+'.Recipe where id=(?)', [req.params.id], (err, data) => {
             if (err) {
                 return res.status(400).json({ msg: 'Fetching Recipe failed'});
             }
             else if (data[0] != null) {
-                data[0].created_ts = localTime(data[0].created_ts);
-                data[0].updated_ts = localTime(data[0].updated_ts);
+                data[0].created_ts = data[0].created_ts;
+                data[0].updated_ts = data[0].updated_ts;
                 data[0].ingredients = JSON.parse(data[0].ingredients);
                 data[0].steps = JSON.parse(data[0].steps);
                 data[0].nutrition_information = JSON.parse(data[0].nutrition_information);
@@ -216,10 +215,10 @@ router.get('/:id', (req, res) => {
 //to delete the recipe 
 router.delete('/:id', checkUser.authenticate, (req, res) => {
     if (res.locals.user) {
-        mysql.query('select * from RMS.Recipe where id=(?)', [req.params.id], (err, result) => {
+        mysql.query('select * from '+process.env.DATABASE+'.Recipe where id=(?)', [req.params.id], (err, result) => {
             if (result[0] != null) {
                 if (result[0].author_id === res.locals.user.id) {
-                    mysql.query('delete from RMS.Recipe where id=(?)', [req.params.id], (err, result) => {
+                    mysql.query('delete from '+process.env.DATABASE+'.Recipe where id=(?)', [req.params.id], (err, result) => {
                         if (err) {
                             return res.status(404).json({ msg: 'Not Found' });
                         } else {

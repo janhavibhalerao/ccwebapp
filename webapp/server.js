@@ -9,7 +9,7 @@ const recipeRouter = require('./routes/recipe');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/v1/user', usersRouter);
-app.use('/v1/recipie', recipeRouter);
+app.use('/v1/recipe', recipeRouter);
 
 //error handling
 app.use((req, res, next) => {

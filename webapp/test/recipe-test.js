@@ -8,7 +8,7 @@ var server = supertest.agent("http://localhost:3000");
 //------------------------------GET-------------------------------------
 describe('get() recepie', ()=>{
     it("should not return recepie", (done)=>{
-        server.get('/v1/recipie/a236b214-e585-11e9-b3b2-142c9f9e3')   // provide invalid id
+        server.get('/v1/recipe/a236b214')   // provide invalid id
         .expect("Content-type",/json/)
         .expect(400)
         .end((err,res)=>{
@@ -21,9 +21,9 @@ describe('get() recepie', ()=>{
 //----------------------------POST---------------------------------------
 describe("post Test",function(){
 
-    it('should not allow to post recipie',(done) => {
-        server.post('/v1/recipie',checkUser.authenticate)
-        .send({password :'Cloud@123',username :'cloud200@gmail.com'})     // enter URL for GET
+    it('should not allow to post recipe',(done) => {
+        server.post('/v1/recipe')
+        .send({password :'',username :''})     // enter URL for GET
         .expect("Content-type",/json/)
         .expect(401)
         .end(function(err,res){
@@ -36,8 +36,8 @@ describe("post Test",function(){
 //----------------------------delete------------------------
 describe("delete Test",function(){
 
-    it('should not allow to delete recipie',(done) => {
-        server.delete('/v1/recipie/',checkUser.authenticate)
+    it('should not allow to delete recipe',(done) => {
+        server.delete('/v1/recipe/')
         .send({password :'Cloud@123',username :'cloud200@gmail.com'})     // enter URL for GET
         .expect("Content-type",/json/)
         .expect(404)
@@ -51,8 +51,8 @@ describe("delete Test",function(){
 //----------------------------put------------------------
 describe("put Test",function(){
 
-    it('should not allow to update recipie',(done) => {
-        server.put('/v1/recipie/',checkUser.authenticate)
+    it('should not allow to update recipe',(done) => {
+        server.put('/v1/recipe/')
         .send({password :'Cloud@123',username :'cloud200@gmail.com'})     // enter URL for GET
         .expect("Content-type",/json/)
         .expect(404)

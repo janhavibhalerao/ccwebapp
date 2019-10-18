@@ -13,7 +13,7 @@ exports.authenticate = (req, res, next) => {
         const auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
         const username = auth[0];
         const password = auth[1];
-        mysql.query('select * from RMS.User where email_address = (?)', [username], (err, data) => {
+        mysql.query('select * from '+process.env.DATABASE+'.User where email_address = (?)', [username], (err, data) => {
             if (data[0] != null) {
                 bcrypt.compare(password, data[0].password, (err, result) => {
                     if (result) {

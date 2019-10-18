@@ -1,54 +1,16 @@
 
-// // This agent refers to PORT where program is runninng.
+//This agent refers to PORT where program is runninng.
 
 process.env.NODE_ENV ='test';
-const expect = require('chai').expect;
+const chai = require('chai');
 const supertest = require('supertest');
-const should = require("should");
-const request = require('request');
-const mysql = require('../services/db');
+const should = chai.should();
+const expect = chai.expect;
 const checkUser = require('../services/auth');
-var server = supertest.agent("http://localhost:3000");
+const server = supertest.agent('http://localhost:3000');
 const main =require('../routes/user.js');
 
-
-
-
-//----------------------------POST------------------------------------
-describe('POST Test', () => {
-    
-    it('Create new User expect code 201',(done) => {
-        server.post('/v1/user')   // enter URL for POST
-        .send({first_name:'cloud',last_name:'fall',password:'Cloud@123',email_address:'cloudfall555@gmail.com'})
-        .expect("Content-type",/json/)
-        .end((err,res)=>{
-            const body=res.body;
-            expect(body).to.contain.property('id');
-            expect(body).to.contain.property('first_name');
-            expect(body).to.contain.property('last_name');
-            expect(body).to.contain.property('email_address');
-            expect(body).to.contain.property('account_created');
-            expect(body).to.contain.property('account_updated');
-            res.status.should.equal(201);
-            done();
-        });
-        //.catch((err)=> done(err));
-    });
-    
-    it('Error Creating new User status 400',(done) => {
-        server.post('/v1/user')   // enter URL for POST
-        .send({first_name :'cloud',last_name :'fall',password :'Cloud@123',email_address :'cloudfall555@gmail.com'})
-        .expect("Content-type",/json/)
-        .end((err,res)=>{
-            const body=res.body;
-            console.log(res.body);
-            res.status.should.equal(400);
-            done();
-        });
-    });
-});
-
-// // -----------------------------------GET------------------------------------------
+//-----------------------------------GET------------------------------------------
 
 describe("GET Test",function(){
 
@@ -65,7 +27,7 @@ describe("GET Test",function(){
     });
 
     it('Unauthorized User --> 401 : Unauthorized ',(done) => {
-        server.get('/v1/user/self',checkUser.authenticate)
+        server.get('/v1/user/self')
         .send({password :'Cloud@123',username :'cloud200@gmail.com'})     // enter URL for GET
         .expect("Content-type",/json/)
         .expect(401)
@@ -79,24 +41,6 @@ describe("GET Test",function(){
 
 //--------------------------Invalid URL----------------------------------
 describe('Basic URL Test', () => {
-
-    it('Main page content',function(done){
-        this.timeout(1500);
-        setTimeout(done, 1500);
-        request('http://localhost:3000',function(error,response,body){
-            done();
-        });
-    });
-
-
-    it('Invalid URL', function(done) {
-        this.timeout(1500);
-        setTimeout(done, 1500);
-        request('http://localhost:3000/cloud@gmail.com' , function(error, response, body) {
-            expect(response.statusCode).to.equal(404);
-            done();
-        });
-    });
 
     it("should return 404",function(done){
         server
@@ -114,7 +58,7 @@ describe('Basic URL Test', () => {
 describe('PUT request', () => {
 
     it('Update Invalid User Details --> 400 : BAD request',(done) => {
-        server.put('/v1/user/self',checkUser.authenticate)     // enter URL for PUT
+        server.put('/v1/user/self')     // enter URL for PUT
         .expect("Content-type",/json/)
         .expect(400)
         .end(function(err,res){
@@ -124,7 +68,7 @@ describe('PUT request', () => {
     });
 
     it('Unauthorized User --> 401 : Unauthorized ',(done) => {
-        server.put('/v1/user/self',checkUser.authenticate)
+        server.put('/v1/user/self')
         .send({password :'Cloud@123',email_address :'cloud5@gmail.com'})     // enter URL for PUT
         .expect("Content-type",/json/)
         .expect(401)

@@ -11,13 +11,13 @@ con.connect(function (err) {
     if (err) throw err;
     else {
         console.log("Connected!");
-        con.query("DROP DATABASE IF EXISTS RMS;", function (err, result) {
+        con.query("DROP DATABASE IF EXISTS "+process.env.DATABASE+";", function (err, result) {
             if (err) throw err;
             else {
-                con.query("CREATE DATABASE RMS", function (err, result) {
+                con.query("CREATE DATABASE "+process.env.DATABASE, function (err, result) {
                     if (err) throw err;
                     else {
-                        var sql = `CREATE TABLE RMS.User(
+                        var sql = `CREATE TABLE `+process.env.DATABASE+`.User(
             id varchar(36) NOT NULL,
             first_name varchar(45) NOT NULL,
             last_name varchar(45) NOT NULL,
@@ -31,7 +31,7 @@ con.connect(function (err) {
                         con.query(sql, function (err, result) {
                             if (err) throw err;
                             else {
-                                var sql1 = `CREATE TABLE RMS.Recipe (
+                                var sql1 = `CREATE TABLE `+process.env.DATABASE+`.Recipe (
                 id varchar(36) NOT NULL COMMENT 'Creating Recipe',
                 created_ts datetime NOT NULL,
                 updated_ts datetime NOT NULL,
@@ -47,7 +47,7 @@ con.connect(function (err) {
                 nutrition_information json NOT NULL,
                 PRIMARY KEY (id),
                 KEY fk_recipe_author_idx (author_id),
-                CONSTRAINT fk_recipe_author FOREIGN KEY (author_id) REFERENCES RMS.User (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+                CONSTRAINT fk_recipe_author FOREIGN KEY (author_id) REFERENCES `+process.env.DATABASE+`.User (id) ON DELETE NO ACTION ON UPDATE NO ACTION
               ) ENGINE=InnoDB DEFAULT CHARSET=latin1;`;
 
                                 con.query(sql1, function (err, result) {
