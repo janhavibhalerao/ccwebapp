@@ -6,6 +6,7 @@ provider "aws" {
 resource "aws_vpc" "main" {
   cidr_block       = "${var.vpc_cidr}"
   instance_tenancy = "${var.vpc_tenancy}"
+  enable_dns_hostnames = "${var.vpc_dns}"
   tags = "${map("Name", var.vpc_name)}"
   
 }

@@ -40,3 +40,8 @@ variable "public_rt" {
   type = string
   default = "public-rt"
 }
+
+variable "vpc_dns" {
+  type = string
+  default = true
+}

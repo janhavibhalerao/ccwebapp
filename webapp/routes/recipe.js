@@ -6,9 +6,10 @@ const moment = require('moment');
 const mysql = require('../services/db');
 const checkUser = require('../services/auth');
 const { check, validationResult } = require('express-validator');
+const upload = require('../services/file-upload');
+const singleUpload = upload.single('image');
 
 // Protected routes
-
 router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) => {
     if (res.locals.user) {
         if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
@@ -16,7 +17,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
             return res.status(400).json({ msg: 'Invalid Request body' });
         } else {
 
-            mysql.query('select * from '+process.env.DATABASE+'.Recipe where id=(?)', [req.params.id], (err, result) => {
+            mysql.query('select * from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.id], (err, result) => {
                 if (result[0] != null) {
                     if (result[0].author_id === res.locals.user.id) {
                         let contentType = req.headers['content-type'];
@@ -44,9 +45,9 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                     let prepTime = parseInt(req.body.prep_time_in_min);
                                     let cookTime = parseInt(req.body.cook_time_in_min);
                                     let totalTimeForPrep = prepTime + cookTime;
-                                    let updTimeStamp =  moment().format('YYYY-MM-DD HH:mm:ss');
+                                    let updTimeStamp = moment().format('YYYY-MM-DD HH:mm:ss');
                                     let crtTimeStamp = result[0].created_ts;
-                                    mysql.query(`UPDATE `+process.env.DATABASE+`.Recipe SET 
+                                    mysql.query(`UPDATE ` + process.env.DATABASE + `.Recipe SET 
                                 cook_time_in_min =(?),
                                 prep_time_in_min =(?), 
                                 total_time_in_min=(?),
@@ -142,7 +143,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                 let totalTimeForPrep = prepTime + cookTime;
                 let id = uuid();
                 let timeStamp = moment().format('YYYY-MM-DD HH:mm:ss');
-                mysql.query('insert into '+process.env.DATABASE+'.Recipe(`id`,`created_ts`,`updated_ts`,`author_id`,`cook_time_in_min`,`prep_time_in_min`, `total_time_in_min`,`title`,`cusine`, `servings`,`ingredients`,`steps`,`nutrition_information`)values(?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                mysql.query('insert into ' + process.env.DATABASE + '.Recipe(`id`,`created_ts`,`updated_ts`,`author_id`,`cook_time_in_min`,`prep_time_in_min`, `total_time_in_min`,`title`,`cusine`, `servings`,`ingredients`,`steps`,`nutrition_information`)values(?,?,?,?,?,?,?,?,?,?,?,?,?)'
                     , [id, timeStamp, timeStamp,
                         res.locals.user.id,
                         prepTime,
@@ -190,9 +191,9 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
 router.get('/:id', (req, res) => {
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
-        mysql.query('select * from '+process.env.DATABASE+'.Recipe where id=(?)', [req.params.id], (err, data) => {
+        mysql.query('select * from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.id], (err, data) => {
             if (err) {
-                return res.status(400).json({ msg: 'Fetching Recipe failed'});
+                return res.status(400).json({ msg: 'Fetching Recipe failed' });
             }
             else if (data[0] != null) {
                 data[0].created_ts = data[0].created_ts;
@@ -215,10 +216,10 @@ router.get('/:id', (req, res) => {
 //to delete the recipe 
 router.delete('/:id', checkUser.authenticate, (req, res) => {
     if (res.locals.user) {
-        mysql.query('select * from '+process.env.DATABASE+'.Recipe where id=(?)', [req.params.id], (err, result) => {
+        mysql.query('select * from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.id], (err, result) => {
             if (result[0] != null) {
                 if (result[0].author_id === res.locals.user.id) {
-                    mysql.query('delete from '+process.env.DATABASE+'.Recipe where id=(?)', [req.params.id], (err, result) => {
+                    mysql.query('delete from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.id], (err, result) => {
                         if (err) {
                             return res.status(404).json({ msg: 'Not Found' });
                         } else {
@@ -235,6 +236,46 @@ router.delete('/:id', checkUser.authenticate, (req, res) => {
     } else {
         return res.status(401).json({ msg: 'Unauthorized' });
     }
+});
+
+router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
+    console.log('You are here!!');
+    mysql.query('select * from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.id], (err, result) => {
+        if (result[0] != null) {
+            console.log('You are here1!!');
+            if (result[0].author_id === res.locals.user.id) {
+                console.log('You are here2!!');
+                let id = uuid();
+                singleUpload(req, res, (err) => {
+                    if (err) {
+                        return res.status(400).json({ msg: err });
+                    } else {
+                        let image = {
+                            'id': uuid(),
+                            'url': req.file.location
+                        };
+
+                        mysql.query(`UPDATE ` + process.env.DATABASE + `.Recipe SET image=(?) where id=(?)`, [JSON.stringify(image), req.params.id], (err, result) => {
+                            if (!err) {
+                                return res.json(image);
+                            } else {
+                                return res.status(500).json({ msg: 'Some error while storing image data to DB' });
+                            }
+                        })
+
+
+                    }
+
+                });
+
+            } else {
+                return res.status(401).json({ msg: 'Unauthorized' });
+            }
+        } else {
+            return res.status(404).json({ msg: 'Recipe Not Found' });
+        }
+    });
+
 });
 
 

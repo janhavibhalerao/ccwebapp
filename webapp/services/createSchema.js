@@ -45,6 +45,7 @@ con.connect(function (err) {
                 ingredients json NOT NULL,
                 steps json NOT NULL,
                 nutrition_information json NOT NULL,
+                image json,
                 PRIMARY KEY (id),
                 KEY fk_recipe_author_idx (author_id),
                 CONSTRAINT fk_recipe_author FOREIGN KEY (author_id) REFERENCES `+process.env.DATABASE+`.User (id) ON DELETE NO ACTION ON UPDATE NO ACTION
