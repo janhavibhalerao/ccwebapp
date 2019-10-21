@@ -1,3 +1,25 @@
+provider "aws" {
+  region  = "${var.aws_region}"
+  version = "~> 2.31"
+}
+
+resource "aws_instance" "web" {
+    ami           = "${var.AMI_ID}"
+    instance_type = "t2.micro"
+    ebs_block_device {
+        device_name = "/dev/sdg"
+        volume_size = 20
+        volume_type = "gp2"
+        delete_on_termination = true
+    }
+
+    tags = {
+        Name = "EC2_Instance"
+    }
+    vpc_security_group_ids = ["${aws_security_group.application.id}"]
+    depends_on = [aws_db_instance.db_instance]
+}
+
 data "aws_vpcs" "foo" {
   tags = {
     Name = "${var.vpc_name}"
@@ -121,6 +143,7 @@ resource "aws_s3_bucket_object" "lifecycle-archive" {
     bucket = "${aws_s3_bucket.s3_bucket.id}"
     acl    = "private"
     key    = "archive/"
+    source  = "/dev/null"
 }
 
 resource "aws_db_instance" "db_instance"{
@@ -172,10 +195,11 @@ resource "aws_dynamodb_table" "csye6225" {
     }
 }
 
-
 resource "random_string" "random" {
     length = 16
     special = true
 }
+
+
 
 
