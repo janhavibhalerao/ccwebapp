@@ -3,27 +3,12 @@ provider "aws" {
   version = "~> 2.31"
 }
 
-resource "aws_instance" "web" {
-    ami           = "${var.AMI_ID}"
-    instance_type = "t2.micro"
-    ebs_block_device {
-        device_name = "/dev/sdg"
-        volume_size = 20
-        volume_type = "gp2"
-        delete_on_termination = true
-    }
-
-    tags = {
-        Name = "EC2_Instance"
-    }
-    vpc_security_group_ids = ["${aws_security_group.application.id}"]
-    depends_on = [aws_db_instance.db_instance]
+data "aws_availability_zones" "available" {
+  state = "available"
 }
 
 data "aws_vpcs" "foo" {
-  tags = {
-    Name = "${var.vpc_name}"
-  }
+  tags = "${map("Name", var.vpc_name)}"
 }
 
 output "foo" {
@@ -94,6 +79,23 @@ resource "aws_db_security_group" "database" {
     }
 }
 
+resource "aws_instance" "web" {
+    ami           = "${var.AMI_ID}"
+    instance_type = "t2.micro"
+    ebs_block_device {
+        device_name = "/dev/sdg"
+        volume_size = 20
+        volume_type = "gp2"
+        delete_on_termination = true
+    }
+
+    tags = {
+        Name = "EC2_Instance"
+    }
+    vpc_security_group_ids = ["${aws_security_group.application.id}"]
+    depends_on = [aws_db_instance.db_instance]
+}
+
 resource "aws_kms_key" "mykey" {
   description = "This key is used to encrypt bucket objects"
   deletion_window_in_days = 10
@@ -109,6 +111,7 @@ resource "aws_s3_bucket" "s3_bucket" {
             apply_server_side_encryption_by_default {
             kms_master_key_id = "${aws_kms_key.mykey.arn}"
             sse_algorithm     = "aws:kms"
+            }   
         }
     }
 
@@ -147,13 +150,12 @@ resource "aws_s3_bucket_object" "lifecycle-archive" {
 }
 
 resource "aws_db_instance" "db_instance"{
-    name = "csye6225_instance"
     engine = "mysql"
     engine_version = "5.7"
     apply_immediately = false
     allocated_storage = 20
     instance_class = "db.t2.medium"
-    availability_zone = "${var.AWS_Availability_Zone}"
+    availability_zone = "${data.aws_availability_zones.available.names[0]}"
     multi_az = false
     identifier = "csye6225_fall2019"
     name= "csye6225"
