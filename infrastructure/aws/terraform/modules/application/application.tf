@@ -18,82 +18,66 @@ output "foo" {
 resource "aws_security_group" "application" {
     name="application"
     description="security group for EC2 instance"
-    vpc_id="${data.aws_vpcs.foo.ids}"
+    vpc_id="vpc-0d4b15a82e2d771c9"
 
     ingress {
         to_port = 22
         from_port = 22
         protocol = "tcp"
-        cidr_block = "0.0.0.0/0"
+        cidr_blocks = ["0.0.0.0/0"]
     }
     
     ingress {
         to_port = 80
         from_port = 80
         protocol = "tcp"
-        cidr_block = "0.0.0.0/0"
+        cidr_blocks = ["0.0.0.0/0"]
     }
 
     ingress {
         to_port = 443
         from_port = 443
         protocol = "tcp"
-        cidr_block = "0.0.0.0/0"
+        cidr_blocks = ["0.0.0.0/0"]
     }
 
     ingress {
         to_port = 3000
         from_port = 3000
         protocol = "tcp"
-        cidr_block = "0.0.0.0/0"
+        cidr_blocks = ["0.0.0.0/0"]
     }
 
-    tags {
+    tags = {
         Name = "application"
     }
 }
 
-resource "aws_db_security_group" "database" {
+resource "aws_security_group" "database" {
     name="database"
     description="security group for RDS instance"
-    vpc_id="${data.aws_vpcs.foo.ids}"
+#    vpc_id="${data.aws_vpcs.foo.ids}"
+    vpc_id="vpc-0d4b15a82e2d771c9"
 
     ingress {
         to_port = 3306
         from_port = 3306
         protocol = "tcp"
-        cidr_block = "0.0.0.0/0"
-        security_group_id = ["${aws_security_group.application.id}"]
+        cidr_blocks = ["0.0.0.0/0"]
+        security_groups = ["${aws_security_group.application.id}"]
     }
     
     ingress {
         to_port = 5432
         from_port = 5432
         protocol = "tcp"
-        cidr_block = "0.0.0.0/0"
-        security_group_id = ["${aws_security_group.application.id}"]
-    }
-
-    tags {
-        Name = "database"
-    }
-}
-
-resource "aws_instance" "web" {
-    ami           = "${var.AMI_ID}"
-    instance_type = "t2.micro"
-    ebs_block_device {
-        device_name = "/dev/sdg"
-        volume_size = 20
-        volume_type = "gp2"
-        delete_on_termination = true
+        cidr_blocks = ["0.0.0.0/0"]
+        security_groups = ["${aws_security_group.application.id}"]
     }
 
     tags = {
-        Name = "EC2_Instance"
+        Name = "database"
     }
-    vpc_security_group_ids = ["${aws_security_group.application.id}"]
-    depends_on = [aws_db_instance.db_instance]
 }
 
 resource "aws_kms_key" "mykey" {
@@ -124,8 +108,8 @@ resource "aws_s3_bucket" "s3_bucket" {
         enabled = true
         prefix = "archive/"
 
-        tags {
-            "rule" = "archive"
+        tags = {
+            rule = "archive"
         }
 
         transition {
@@ -137,7 +121,7 @@ resource "aws_s3_bucket" "s3_bucket" {
             days = 120
         }
     }
-    tags {
+    tags = {
         Name = "aws_s3_bucket"
     }
 }
@@ -168,11 +152,27 @@ resource "aws_db_instance" "db_instance"{
         "${aws_db_security_group.database.id}"
     ]
 
-    tags{
+    tags = {
         Name = "csye6225_fall2019"
     }
  }
+ 
+resource "aws_instance" "web" {
+    ami           = "${var.AMI_ID}"
+    instance_type = "t2.micro"
+    ebs_block_device {
+        device_name = "/dev/sdg"
+        volume_size = 20
+        volume_type = "gp2"
+        delete_on_termination = true
+    }
 
+    tags = {
+        Name = "EC2_Instance"
+    }
+    vpc_security_group_ids = ["${aws_security_group.application.id}"]
+    depends_on = [aws_db_instance.db_instance]
+}
 
 resource "aws_dynamodb_table" "csye6225" {
     name           = "csye6225"
@@ -193,7 +193,6 @@ resource "aws_dynamodb_table" "csye6225" {
 
     tags = {
         Name        = "dynamodb-csye6225"
-        Environment = "production"
     }
 }
 
@@ -201,7 +200,3 @@ resource "random_string" "random" {
     length = 16
     special = true
 }
-
-
-
-
