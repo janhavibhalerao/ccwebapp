@@ -18,11 +18,6 @@ variable "AWS_S3_BUCKET_NAME" {
     type = string
 }
 
-variable "AWS_Availability_Zone" {
-    description = "Enter an availability zone. Example (us-east-1a)"
-    type = string
-}
-
 variable "AWS_DB_PASSWORD" {
     description = "Enter an master db password."
     type = string

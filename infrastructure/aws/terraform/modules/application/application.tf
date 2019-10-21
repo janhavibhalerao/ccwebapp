@@ -7,13 +7,13 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-data "aws_vpcs" "foo" {
-  tags = "${map("Name", var.vpc_name)}"
-}
+// data "aws_vpcs" "foo" {
+//   tags = "${map("Name", var.vpc_name)}"
+// }
 
-output "foo" {
-  value = "${data.aws_vpcs.foo.ids}"
-}
+// output "foo" {
+//   value = "${data.aws_vpcs.foo.ids}"
+// }
 
 resource "aws_security_group" "application" {
     name="application"

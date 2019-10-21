@@ -67,3 +67,11 @@ resource "aws_route_table_association" "rtasc3" {
   subnet_id      = "${aws_subnet.subnet3.id}"
   route_table_id = "${aws_route_table.public-rt.id}"
 }
+
+output "vpc_id" {
+  value = "${aws_vpc.main.id}"
+}
+
+output "subnet_id" {
+  value = "${aws_subnet.subnet1.id}"
+}
