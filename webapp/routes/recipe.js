@@ -6,10 +6,11 @@ const moment = require('moment');
 const mysql = require('../services/db');
 const checkUser = require('../services/auth');
 const { check, validationResult } = require('express-validator');
-const upload = require('../services/file-upload');
+const { upload } = require('../services/image');
+const { deleteFromS3 } = require('../services/image');
 const singleUpload = upload.single('image');
 
-// Protected routes
+// Protected route: Update Recipe
 router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) => {
     if (res.locals.user) {
         if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
@@ -117,6 +118,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
     }
 });
 
+//Protected Route: Create Recipe
 router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, next) => {
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
@@ -187,7 +189,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
     }
 });
 
-// To get the user information
+// Get Recipe
 router.get('/:id', (req, res) => {
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
@@ -213,7 +215,7 @@ router.get('/:id', (req, res) => {
 });
 
 
-//to delete the recipe 
+//Protected Route: Delete Recipe
 router.delete('/:id', checkUser.authenticate, (req, res) => {
     if (res.locals.user) {
         mysql.query('select * from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.id], (err, result) => {
@@ -238,6 +240,7 @@ router.delete('/:id', checkUser.authenticate, (req, res) => {
     }
 });
 
+//Protected Route: Attach image to recipe
 router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
     console.log('You are here!!');
     mysql.query('select * from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.id], (err, result) => {
@@ -278,6 +281,68 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
 
 });
 
+//Get recipe image
+router.get('/:recipeId/image/:imageId', (req, res) => {
+    mysql.query('select image from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.recipeId], (err, data) => {
+        if (data[0].image == null) {
+            return res.status(400).json({ msg: 'Image not found!' });
+        }
+        else if (data[0].image != null) {
+            let imageDetails = JSON.parse(Object.values(data[0]));
+            //console.log(imageDetails)
+            return res.status(200).json(imageDetails);
+        }
+        else {
+            return res.status(404).json({ msg: 'Recipe Not Found!' });
+        }
+    });
+});
 
+//Protected Route:Delete recipe image
+router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) => {
+    if (res.locals.user) {
+        mysql.query('select image from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.recipeId], (err, data) => {
+            if (data[0].image != null) {
+                deleteFromS3(req.params.imageId);
+                mysql.query(`UPDATE ` + process.env.DATABASE + `.Recipe SET image=(?) where id=(?)`, [null, req.params.recipeId], (err, result) => {
+                    if (err) {
+                        return res.status(204);
+                    } else {
+                        return res.status(200).json({ msg: 'Delete Image Success!' });
+                    }
+                });
+            }
+            else {
+                return res.status(404).json({ msg: 'Image Not Found!' });
+            }
+        });
+    }
+    else {
+        return res.status(401).json({ msg: 'User unauthorized!' });
+    }
+});
+
+//Get newest recipe
+router.get('/', (req, res) => {
+    let contentType = req.headers['content-type'];
+    if (contentType == 'application/json') {
+        mysql.query('select * from ' + process.env.DATABASE + '.Recipe where created_ts IN(SELECT MAX(created_ts)FROM ' + process.env.DATABASE + '.Recipe)', (err, data) => {
+            if (err) {
+                return res.status(400).json({ msg: 'Fetching newest recipe failed!' });
+            }
+            else if (data[0] != null) {
+                data[0].ingredients = JSON.parse(data[0].ingredients);
+                data[0].steps = JSON.parse(data[0].steps);
+                data[0].nutrition_information = JSON.parse(data[0].nutrition_information);
+                return res.status(200).json(data[0]);
+            } else {
+                return res.status(404).json({ msg: 'Not Found' });
+            }
+
+        });
+    } else {
+        return res.status(400).json({ msg: 'Request type must be JSON!' });
+    }
+});
 
 module.exports = router;    
