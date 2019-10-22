@@ -11,7 +11,21 @@ Before you develop the infrastructure, make sure to setup
 1. The networking resources are present in modules --> networking --> networking.tf
 2. So Navigate to CCWEBAPP --> infrastructure --> aws --> terraform --> env1
 3. Execute terraform init to initialize the provider plugins
-4. Execute terraform apply and then pass the required parameters to create the required    resources
-5. Execute terraform destroy and then pass the required parameters to destroy the          required resources
-6. Alternatively you can use the file test.tfvars to pass parameters to steps 4 and 5      using terraform apply -var-file "relative/path/to/file" or terraform destroy            -var-file "relative/path/to/file"
-7. To create another vpc, with same configuration, navigate to env2 and follow the         above steps
+4. Execute terraform apply and then pass the required parameters to create the required resources
+5. Execute terraform destroy and then pass the required parameters to destroy the required resources. In    order to destroy networking module you need to destroy application module first. 
+   (Execute the below commands in order --> terraform destroy -target=module.application -var
+    terraform destroy -target=module.networking -var)
+6. Alternatively you can use the file test.tfvars to pass parameters to steps 4 and 5 using                 terraform apply -var-file "relative/path/to/file" or terraform destroy -var-file "relative/   path/to/   file"
+7. To create another vpc, with same configuration, navigate to env2 and follow the above steps
+
+#Required Parameters to create Infrastructure
+aws_region
+vpc_name
+vpc_cidr
+subnet3_cidr
+subnet2_cidr
+subnet1_cidr
+AMI_ID
+AWS_S3_BUCKET_NAME
+AWS_DB_PASSWORD
+  

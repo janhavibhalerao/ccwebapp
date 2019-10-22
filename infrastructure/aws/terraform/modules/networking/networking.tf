@@ -86,7 +86,3 @@ output "subnet_id" {
 output "subnet_group" {
   value = "${aws_db_subnet_group.subnet-group.id}"
 }
-
-output "igw" {
-  value = "${aws_internet_gateway.vpc_igw}"
-}

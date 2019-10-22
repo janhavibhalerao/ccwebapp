@@ -142,6 +142,7 @@ resource "aws_db_instance" "db-instance" {
     username = "dbuser"
     password = "${var.AWS_DB_PASSWORD}"
     publicly_accessible = true
+    skip_final_snapshot = true
     db_subnet_group_name="${var.aws_subnet_group}"
     vpc_security_group_ids = ["${aws_security_group.database.id}"]
     tags = {
@@ -151,25 +152,25 @@ resource "aws_db_instance" "db-instance" {
  }
 
 
-// resource "aws_dynamodb_table" "csye6225" {
-//     name           = "csye6225"
-//     billing_mode   = "PROVISIONED"
-//     read_capacity  = 20
-//     write_capacity = 20
-//     hash_key       = "id"
+resource "aws_dynamodb_table" "csye6225" {
+    name           = "csye6225"
+    billing_mode   = "PROVISIONED"
+    read_capacity  = 20
+    write_capacity = 20
+    hash_key       = "id"
 
-//     attribute {
-//         name = "id"
-//         type = "S"
-//     }
+    attribute {
+        name = "id"
+        type = "S"
+    }
 
-//     ttl {
-//         attribute_name = "TimeToExist"
-//         enabled        = false
-//     }
+    ttl {
+        attribute_name = "TimeToExist"
+        enabled        = false
+    }
 
-//     tags = {
-//         Name        = "dynamodb-csye6225"
-//         Environment = "production"
-//     }
-// }
+    tags = {
+        Name        = "dynamodb-csye6225"
+        Environment = "production"
+    }
+}
