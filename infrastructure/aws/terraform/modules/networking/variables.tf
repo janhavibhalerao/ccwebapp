@@ -1,8 +1,3 @@
-variable "aws_region" {
-    description = "Enter AWS_Region. Example (us-east-1) "
-    type = string
-}
-
 variable "vpc_name" {
   description = "Enter a valid vpc name "
   type = string

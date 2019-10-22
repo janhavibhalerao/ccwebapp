@@ -6,6 +6,7 @@ npm-debug.log
 *.tfstate
 *.tfstate.backup
 *.tfstate.lock.info
+*.tfvars
 
 # logs
 *.log
@@ -22,6 +23,7 @@ npm-debug.log
 
 # Ignored Terraform files
 *gitignore*.tf
+
 
 # Ignore Mac .DS_Store files
 .DS_Store
