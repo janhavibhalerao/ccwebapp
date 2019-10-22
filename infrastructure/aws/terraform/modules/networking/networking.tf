@@ -1,8 +1,3 @@
-provider "aws" {
-  region  = "${var.aws_region}"
-  version = "~> 2.31"
-}
-
 resource "aws_vpc" "main" {
   cidr_block       = "${var.vpc_cidr}"
   instance_tenancy = "${var.vpc_tenancy}"
@@ -19,12 +14,14 @@ data "aws_availability_zones" "available" {
 resource "aws_subnet" "subnet1" {
   vpc_id = "${aws_vpc.main.id}"
   cidr_block = "${var.subnet1_cidr}"
+  map_public_ip_on_launch = true
   availability_zone = "${data.aws_availability_zones.available.names[0]}"
   tags = "${map("Name", "subnet1-${var.vpc_name}")}"
 }
 
 resource "aws_subnet" "subnet2" {
   vpc_id = "${aws_vpc.main.id}"
+  map_public_ip_on_launch = true
   cidr_block = "${var.subnet2_cidr}"
   availability_zone = "${data.aws_availability_zones.available.names[1]}"
   tags = "${map("Name", "subnet2-${var.vpc_name}")}"
@@ -32,9 +29,19 @@ resource "aws_subnet" "subnet2" {
 
 resource "aws_subnet" "subnet3" {
   vpc_id = "${aws_vpc.main.id}"
+  map_public_ip_on_launch = true
   cidr_block = "${var.subnet3_cidr}"
   availability_zone = "${data.aws_availability_zones.available.names[2]}"
   tags = "${map("Name", "subnet3-${var.vpc_name}")}"
+}
+
+resource "aws_db_subnet_group" "subnet-group" {
+  name       = "main"
+  subnet_ids = ["${aws_subnet.subnet1.id}", "${aws_subnet.subnet2.id}", "${aws_subnet.subnet3.id}"]
+
+  tags = {
+    Name = "My DB subnet group"
+  }
 }
 
 resource "aws_internet_gateway" "vpc-igw" {
@@ -74,4 +81,12 @@ output "vpc_id" {
 
 output "subnet_id" {
   value = "${aws_subnet.subnet1.id}"
+}
+
+output "subnet_group" {
+  value = "${aws_db_subnet_group.subnet-group.id}"
+}
+
+output "igw" {
+  value = "${aws_internet_gateway.vpc_igw}"
 }

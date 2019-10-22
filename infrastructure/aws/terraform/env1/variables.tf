@@ -43,7 +43,6 @@ variable "public_rt" {
 
 variable "AMI_ID" {
     description = "Enter an AMI ID"
-    default = "ami-9887c6e7"
 }
 
 variable "AWS_S3_BUCKET_NAME" {
