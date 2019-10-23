@@ -1,21 +1,19 @@
+const config = require('./../config/config');
+const { aws: { aws_secret_key, aws_access_key, aws_region, s3_bucket_name } } = config;
 const aws = require('aws-sdk');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = new aws.S3();
-const AWS_SECRET_KEY = process.env.AWS_SECRET_KEY;
-const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
-const AWS_REGION = process.env.AWS_REGION;
-const S3_BUCKET_NAME = process.env.BUCKET_NAME;
 
 aws.config.update({
-    secretAccessKey: AWS_SECRET_KEY,
-    accessKeyId: AWS_ACCESS_KEY,
-    region: AWS_REGION
+    secretAccessKey: aws_secret_key,
+    accessKeyId: aws_access_key,
+    region: aws_region
 });
 let upload = multer({
     storage: multerS3({
         s3: s3,
-        bucket: S3_BUCKET_NAME,
+        bucket: s3_bucket_name,
         key: function (req, file, cb) {
             var filetypes = /jpeg|jpg|png/;
             var mimetype = filetypes.test(file.mimetype);
@@ -32,7 +30,7 @@ let upload = multer({
 
 function deleteFromS3(imageId) {
     var params = {
-        Bucket: S3_BUCKET_NAME,
+        Bucket: s3_bucket_name,
         Key: imageId
     };
     s3.deleteObject(params, function (err, data) {

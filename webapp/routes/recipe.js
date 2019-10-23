@@ -302,8 +302,8 @@ router.get('/:recipeId/image/:imageId', (req, res) => {
 router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) => {
     if (res.locals.user) {
         mysql.query('select image from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.recipeId], (err, data) => {
-            if (data[0].image != null) {
-                deleteFromS3(req.params.imageId);
+            if (data[0].image != null && req.params.imageId!= null) {
+                deleteFromS3(req.params.imageId)
                 mysql.query(`UPDATE ` + process.env.DATABASE + `.Recipe SET image=(?) where id=(?)`, [null, req.params.recipeId], (err, result) => {
                     if (err) {
                         return res.status(204);
