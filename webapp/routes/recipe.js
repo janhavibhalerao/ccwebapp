@@ -124,7 +124,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
     if (contentType == 'application/json') {
         let errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ msg: 'Express validation failed' });
+            return res.status(400).json({ msg: 'Invalid request body' });
         } else {
             let steps = req.body.steps;
             let hi = 0;
@@ -239,13 +239,30 @@ router.delete('/:id', checkUser.authenticate, (req, res) => {
         mysql.query('select * from ' + database + '.Recipe where id=(?)', [req.params.id], (err, result) => {
             if (result[0] != null) {
                 if (result[0].author_id === res.locals.user.id) {
-                    mysql.query('delete from ' + database + '.Recipe where id=(?)', [req.params.id], (err, result) => {
-                        if (err) {
-                            return res.status(404).json({ msg: 'Not Found' });
-                        } else {
-                            return res.status(204).json();
-                        }
-                    });
+                    if (result[0].image != null) {
+                        result[0].image = JSON.parse(result[0].image);
+                        let s3Id = result[0].image.url.split('/');
+                        let imageId = s3Id[s3Id.length - 1];
+                        deleteFromS3(imageId, function (resp) {
+                            if (resp != null) {
+                                mysql.query('delete from ' + database + '.Recipe where id=(?)', [req.params.id], (err, result) => {
+                                    if (err) {
+                                        return res.status(404).json({ msg: 'Not Found' });
+                                    } else {
+                                        return res.status(204).json();
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        mysql.query('delete from ' + database + '.Recipe where id=(?)', [req.params.id], (err, result) => {
+                            if (err) {
+                                return res.status(404).json({ msg: 'Not Found' });
+                            } else {
+                                return res.status(204).json();
+                            }
+                        });
+                    }
                 } else {
                     return res.status(401).json({ msg: 'Unauthorized' });
                 }
