@@ -9,7 +9,7 @@ const mysql = require('../services/db');
 const saltRounds = 10;
 const checkUser = require('../services/auth');
 const config = require('./../config/config');
-const { rds: { database } } = config;
+const { db: { database } } = config;
 
 // protected routes
 
