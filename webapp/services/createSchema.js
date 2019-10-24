@@ -35,6 +35,7 @@ con.connect(function (err) {
                             else {
                                 var sql1 = `CREATE TABLE ` + database + `.Recipe (
                                     image json,
+                                    metadata json,
                 id varchar(36) NOT NULL COMMENT 'Creating Recipe',
                 created_ts datetime NOT NULL,
                 updated_ts datetime NOT NULL,

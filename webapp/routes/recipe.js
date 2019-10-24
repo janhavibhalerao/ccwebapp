@@ -6,8 +6,7 @@ const moment = require('moment');
 const mysql = require('../services/db');
 const checkUser = require('../services/auth');
 const { check, validationResult } = require('express-validator');
-const { upload } = require('../services/image');
-const { deleteFromS3 } = require('../services/image');
+const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image');
 const singleUpload = upload.single('image');
 
 // Protected route: Update Recipe
@@ -257,18 +256,17 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
                             'id': uuid(),
                             'url': req.file.location
                         };
+                        let metadata = getMetaDataFromS3()
+                        console.log('metadata in recipe: '+JSON.stringify(metadata))
 
-                        mysql.query(`UPDATE ` + process.env.DATABASE + `.Recipe SET image=(?) where id=(?)`, [JSON.stringify(image), req.params.id], (err, result) => {
+                        mysql.query(`UPDATE ` + process.env.DATABASE + `.Recipe SET image=(?), metadata=(?) where id=(?)`, [JSON.stringify(image), JSON.stringify(metadata), req.params.id], (err, result) => {
                             if (!err) {
                                 return res.json(image);
                             } else {
                                 return res.status(500).json({ msg: 'Some error while storing image data to DB' });
                             }
                         })
-
-
                     }
-
                 });
 
             } else {
@@ -304,7 +302,7 @@ router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) =>
         mysql.query('select image from ' + process.env.DATABASE + '.Recipe where id=(?)', [req.params.recipeId], (err, data) => {
             if (data[0].image != null && req.params.imageId!= null) {
                 deleteFromS3(req.params.imageId)
-                mysql.query(`UPDATE ` + process.env.DATABASE + `.Recipe SET image=(?) where id=(?)`, [null, req.params.recipeId], (err, result) => {
+                mysql.query(`UPDATE ` + process.env.DATABASE + `.Recipe SET image=(?), metadata=(?) where id=(?)`, [null, null, req.params.recipeId], (err, result) => {
                     if (err) {
                         return res.status(204);
                     } else {

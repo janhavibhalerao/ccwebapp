@@ -4,6 +4,7 @@ const aws = require('aws-sdk');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const s3 = new aws.S3();
+let objId;
 
 aws.config.update({
     secretAccessKey: aws_secret_key,
@@ -19,7 +20,8 @@ let upload = multer({
             var mimetype = filetypes.test(file.mimetype);
             if (mimetype) {
                 console.log("Hey here");
-                cb(null, file.originalname + '_' + Date.now().toString());
+                objId = file.originalname + '_' + Date.now().toString();
+                cb(null, objId);
             } else {
                 cb("Error: File upload only supports the following filetypes - " + filetypes);
 
@@ -43,7 +45,24 @@ function deleteFromS3(imageId) {
     });
 }
 
+function getMetaDataFromS3() {
+    console.log(objId)
+    var params = {
+        Bucket: s3_bucket_name,
+        Key: objId
+    };
+    s3.headObject(params, function (err, data) {
+        if (err) 
+        console.log(err);
+        else {
+            console.log('metadata :'+JSON.stringify(data));
+            return data;
+        }     
+    });
+}
+
 module.exports = {
     upload,
-    deleteFromS3
+    deleteFromS3,
+    getMetaDataFromS3
 }
