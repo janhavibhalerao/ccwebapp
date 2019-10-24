@@ -1,24 +1,11 @@
-provider "aws" {
-  region  = "${var.aws_region}"
-  version = "~> 2.31"
-}
-
 data "aws_availability_zones" "available" {
   state = "available"
-}
-
-data "aws_vpcs" "foo" {
-  tags = "${map("Name", var.vpc_name)}"
-}
-
-output "foo" {
-  value = "${data.aws_vpcs.foo.ids}"
 }
 
 resource "aws_security_group" "application" {
     name="application"
     description="security group for EC2 instance"
-    vpc_id="vpc-0d4b15a82e2d771c9"
+    vpc_id="${var.aws_vpc_id}"
 
     ingress {
         to_port = 22
@@ -56,28 +43,35 @@ resource "aws_security_group" "application" {
 resource "aws_security_group" "database" {
     name="database"
     description="security group for RDS instance"
-#    vpc_id="${data.aws_vpcs.foo.ids}"
-    vpc_id="vpc-0d4b15a82e2d771c9"
+    vpc_id="${var.aws_vpc_id}"
 
     ingress {
         to_port = 3306
         from_port = 3306
         protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
         security_groups = ["${aws_security_group.application.id}"]
     }
-    
-    ingress {
-        to_port = 5432
-        from_port = 5432
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-        security_groups = ["${aws_security_group.application.id}"]
-    }
-
     tags = {
         Name = "database"
     }
+}
+
+resource "aws_instance" "web" {
+    ami           = "${var.AMI_ID}"
+    subnet_id = "${var.ec2subnet}"
+    instance_type = "t2.micro"
+    ebs_block_device {
+        device_name = "/dev/sdg"
+        volume_size = 20
+        volume_type = "gp2"
+        delete_on_termination = true
+    }
+
+    tags = {
+        Name = "csye6225-ec2"
+    }
+    vpc_security_group_ids = ["${aws_security_group.application.id}"]
+    depends_on = [aws_db_instance.db-instance]
 }
 
 resource "aws_kms_key" "mykey" {
@@ -99,19 +93,8 @@ resource "aws_s3_bucket" "s3_bucket" {
         }
     }
 
-    versioning {
+     lifecycle_rule {
         enabled = true
-    }
-
-    lifecycle_rule {
-        id      = "archive"
-        enabled = true
-        prefix = "archive/"
-
-        tags = {
-            rule = "archive"
-        }
-
         transition {
             days = 30
             storage_class = "STANDARD_IA"
@@ -126,14 +109,17 @@ resource "aws_s3_bucket" "s3_bucket" {
     }
 }
 
-resource "aws_s3_bucket_object" "lifecycle-archive" {
-    bucket = "${aws_s3_bucket.s3_bucket.id}"
-    acl    = "private"
-    key    = "archive/"
-    source  = "/dev/null"
+resource "aws_s3_bucket_public_access_block" "s3_block" {
+  bucket = "${aws_s3_bucket.s3_bucket.id}"
+  block_public_acls   = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
+
 }
 
-resource "aws_db_instance" "db_instance"{
+
+resource "aws_db_instance" "db-instance" {
     engine = "mysql"
     engine_version = "5.7"
     apply_immediately = false
@@ -141,38 +127,20 @@ resource "aws_db_instance" "db_instance"{
     instance_class = "db.t2.medium"
     availability_zone = "${data.aws_availability_zones.available.names[0]}"
     multi_az = false
-    identifier = "csye6225_fall2019"
+    identifier = "csye6225-fall2019"
     name= "csye6225"
     username = "dbuser"
     password = "${var.AWS_DB_PASSWORD}"
     publicly_accessible = true
-    db_subnet_group_name=""
-
-    security_group_names = [
-        "${aws_db_security_group.database.id}"
-    ]
-
+    skip_final_snapshot = true
+    db_subnet_group_name="${var.aws_subnet_group}"
+    vpc_security_group_ids = ["${aws_security_group.database.id}"]
     tags = {
-        Name = "csye6225_fall2019"
+        Name = "csye6225-fall2019"
     }
+
  }
- 
-resource "aws_instance" "web" {
-    ami           = "${var.AMI_ID}"
-    instance_type = "t2.micro"
-    ebs_block_device {
-        device_name = "/dev/sdg"
-        volume_size = 20
-        volume_type = "gp2"
-        delete_on_termination = true
-    }
 
-    tags = {
-        Name = "EC2_Instance"
-    }
-    vpc_security_group_ids = ["${aws_security_group.application.id}"]
-    depends_on = [aws_db_instance.db_instance]
-}
 
 resource "aws_dynamodb_table" "csye6225" {
     name           = "csye6225"
@@ -193,10 +161,6 @@ resource "aws_dynamodb_table" "csye6225" {
 
     tags = {
         Name        = "dynamodb-csye6225"
+        Environment = "production"
     }
-}
-
-resource "random_string" "random" {
-    length = 16
-    special = true
 }
