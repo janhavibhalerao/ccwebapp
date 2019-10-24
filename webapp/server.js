@@ -3,7 +3,8 @@ const app = express();
 const bodyParser = require('body-parser');
 const usersRouter = require('./routes/user');
 const recipeRouter = require('./routes/recipe');
-
+const config = require('./config/config');
+const { port} = config;
 
 
 app.use(bodyParser.json());
@@ -24,7 +25,7 @@ app.use((error, req, res, next) => {
 });
 
 // start server
-const PORT = process.env.PORT || 3000;
+const PORT = port|| 3000;
 app.listen(PORT,() => {
     console.log(`Server listening on port: ${PORT}`);
 });
