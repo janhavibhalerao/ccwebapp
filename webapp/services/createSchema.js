@@ -1,23 +1,25 @@
 const mysql = require('mysql');
+const config = require('./../config/config');
+const { db: { host, user, password, database } } = config;
 
 //mysql database connection
 var con = mysql.createConnection({
-    host: process.env.MYSQLHOST,
-    user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD
+    host: host,
+    user: user,
+    password: password
 });
 
 con.connect(function (err) {
     if (err) throw err;
     else {
         console.log("Connected!");
-        con.query("DROP DATABASE IF EXISTS "+process.env.DATABASE+";", function (err, result) {
+        con.query("DROP DATABASE IF EXISTS " + database + ";", function (err, result) {
             if (err) throw err;
             else {
-                con.query("CREATE DATABASE "+process.env.DATABASE, function (err, result) {
+                con.query("CREATE DATABASE " + database, function (err, result) {
                     if (err) throw err;
                     else {
-                        var sql = `CREATE TABLE `+process.env.DATABASE+`.User(
+                        var sql = `CREATE TABLE ` + database + `.User(
             id varchar(36) NOT NULL,
             first_name varchar(45) NOT NULL,
             last_name varchar(45) NOT NULL,
@@ -31,7 +33,8 @@ con.connect(function (err) {
                         con.query(sql, function (err, result) {
                             if (err) throw err;
                             else {
-                                var sql1 = `CREATE TABLE `+process.env.DATABASE+`.Recipe (
+                                var sql1 = `CREATE TABLE ` + database + `.Recipe (
+                                    
                 id varchar(36) NOT NULL COMMENT 'Creating Recipe',
                 created_ts datetime NOT NULL,
                 updated_ts datetime NOT NULL,
@@ -46,24 +49,25 @@ con.connect(function (err) {
                 steps json NOT NULL,
                 nutrition_information json NOT NULL,
                 image json,
+                metadata json,
                 PRIMARY KEY (id),
                 KEY fk_recipe_author_idx (author_id),
-                CONSTRAINT fk_recipe_author FOREIGN KEY (author_id) REFERENCES `+process.env.DATABASE+`.User (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+                CONSTRAINT fk_recipe_author FOREIGN KEY (author_id) REFERENCES `+ database + `.User (id) ON DELETE NO ACTION ON UPDATE NO ACTION
               ) ENGINE=InnoDB DEFAULT CHARSET=latin1;`;
 
                                 con.query(sql1, function (err, result) {
                                     if (err) throw err;
                                     else {
-                                        console.log('Recipe Table created');
+                                        console.log('Recipe Table created!');
                                         process.exit(0);
                                     }
                                 });
 
                             }
-                            console.log("User Table created");
+                            console.log("User Table created!");
                         });
                     }
-                    console.log("Database created");
+                    console.log("Database created!");
                 });
 
             }
