@@ -49,18 +49,8 @@ resource "aws_security_group" "database" {
         to_port = 3306
         from_port = 3306
         protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
         security_groups = ["${aws_security_group.application.id}"]
     }
-    
-    ingress {
-        to_port = 5432
-        from_port = 5432
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-        security_groups = ["${aws_security_group.application.id}"]
-    }
-
     tags = {
         Name = "database"
     }
