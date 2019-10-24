@@ -34,8 +34,7 @@ con.connect(function (err) {
                             if (err) throw err;
                             else {
                                 var sql1 = `CREATE TABLE ` + database + `.Recipe (
-                                    image json,
-                                    metadata json,
+                                    
                 id varchar(36) NOT NULL COMMENT 'Creating Recipe',
                 created_ts datetime NOT NULL,
                 updated_ts datetime NOT NULL,
@@ -49,6 +48,8 @@ con.connect(function (err) {
                 ingredients json NOT NULL,
                 steps json NOT NULL,
                 nutrition_information json NOT NULL,
+                image json,
+                metadata json,
                 PRIMARY KEY (id),
                 KEY fk_recipe_author_idx (author_id),
                 CONSTRAINT fk_recipe_author FOREIGN KEY (author_id) REFERENCES `+ database + `.User (id) ON DELETE NO ACTION ON UPDATE NO ACTION

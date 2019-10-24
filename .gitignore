@@ -1,5 +1,7 @@
 #ignore node_modules
 webapp/node_modules
+#ignore config
+webapp/config
 #ignore npm-debug.log
 npm-debug.log
 # Compiled files

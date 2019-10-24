@@ -145,7 +145,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                 let totalTimeForPrep = prepTime + cookTime;
                 let id = uuid();
                 let timeStamp = moment().format('YYYY-MM-DD HH:mm:ss');
-                mysql.query('insert into ' + database+ '.Recipe(`id`,`created_ts`,`updated_ts`,`author_id`,`cook_time_in_min`,`prep_time_in_min`, `total_time_in_min`,`title`,`cusine`, `servings`,`ingredients`,`steps`,`nutrition_information`)values(?,?,?,?,?,?,?,?,?,?,?,?,?)'
+                mysql.query('insert into ' + database + '.Recipe(`id`,`created_ts`,`updated_ts`,`author_id`,`cook_time_in_min`,`prep_time_in_min`, `total_time_in_min`,`title`,`cusine`, `servings`,`ingredients`,`steps`,`nutrition_information`)values(?,?,?,?,?,?,?,?,?,?,?,?,?)'
                     , [id, timeStamp, timeStamp,
                         res.locals.user.id,
                         prepTime,
@@ -193,16 +193,34 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
 router.get('/:id', (req, res) => {
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
-        mysql.query('select * from ' + database + '.Recipe where id=(?)', [req.params.id], (err, data) => {
+        mysql.query(`select 
+        image,
+        id,
+        created_ts,
+        updated_ts,
+        author_id,
+        cook_time_in_min,
+        prep_time_in_min,
+        total_time_in_min,
+        title,
+        cusine,
+        servings,
+        ingredients,
+        steps,
+        nutrition_information
+        from ` + database + `.Recipe where id=(?)`, [req.params.id], (err, data) => {
             if (err) {
                 return res.status(400).json({ msg: 'Fetching Recipe failed' });
             }
             else if (data[0] != null) {
-                data[0].created_ts = data[0].created_ts;
-                data[0].updated_ts = data[0].updated_ts;
                 data[0].ingredients = JSON.parse(data[0].ingredients);
                 data[0].steps = JSON.parse(data[0].steps);
                 data[0].nutrition_information = JSON.parse(data[0].nutrition_information);
+                if (data[0].image != null) {
+                    data[0].image = JSON.parse(data[0].image);
+                } else {
+                    delete data[0]['image'];
+                }
                 return res.status(200).json(data[0]);
             } else {
                 return res.status(404).json({ msg: 'Not Found' });
@@ -242,33 +260,38 @@ router.delete('/:id', checkUser.authenticate, (req, res) => {
 
 //Protected Route: Attach image to recipe
 router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
-    console.log('You are here!!');
     mysql.query('select * from ' + database + '.Recipe where id=(?)', [req.params.id], (err, result) => {
         if (result[0] != null) {
-            console.log('You are here1!!');
             if (result[0].author_id === res.locals.user.id) {
-                console.log('You are here2!!');
-                let id = uuid();
-                singleUpload(req, res, (err) => {
-                    if (err) {
-                        return res.status(400).json({ msg: err });
-                    } else {
-                        let image = {
-                            'id': uuid(),
-                            'url': req.file.location
-                        };
-                        let metadata = getMetaDataFromS3()
-                        console.log('metadata in recipe: '+JSON.stringify(metadata))
+                if (result[0].image != null) {
+                    return res.status(400).json({ msg: 'Please delete the previous image before re-uploading' });
+                } else {
+                    singleUpload(req, res, (err) => {
+                        if (err) {
+                            return res.status(400).json({ msg: err });
+                        } else {
+                            let image = {
+                                'id': uuid(),
+                                'url': req.file.location
+                            };
+                            getMetaDataFromS3(function (metadata) {
+                                if (metadata != null) {
+                                    mysql.query(`UPDATE ` + database + `.Recipe SET image=(?), metadata=(?) where id=(?)`, [JSON.stringify(image), JSON.stringify(metadata), req.params.id], (err, result) => {
+                                        if (!err) {
+                                            return res.json(image);
+                                        } else {
+                                            return res.status(500).json({ msg: 'Some error while storing image data to DB' });
+                                        }
+                                    });
+                                } else {
+                                    return res.status(500).json({ msg: 'Issue in getting metadata' });
+                                }
 
-                        mysql.query(`UPDATE ` + database + `.Recipe SET image=(?), metadata=(?) where id=(?)`, [JSON.stringify(image), JSON.stringify(metadata), req.params.id], (err, result) => {
-                            if (!err) {
-                                return res.json(image);
-                            } else {
-                                return res.status(500).json({ msg: 'Some error while storing image data to DB' });
-                            }
-                        })
-                    }
-                });
+                            });
+                        }
+                    });
+
+                }
 
             } else {
                 return res.status(401).json({ msg: 'Unauthorized' });
@@ -283,15 +306,18 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
 //Get recipe image
 router.get('/:recipeId/image/:imageId', (req, res) => {
     mysql.query('select image from ' + database + '.Recipe where id=(?)', [req.params.recipeId], (err, data) => {
-        if (data[0].image == null) {
-            return res.status(400).json({ msg: 'Image not found!' });
-        }
-        else if (data[0].image != null) {
-            let imageDetails = JSON.parse(Object.values(data[0]));
-            //console.log(imageDetails)
-            return res.status(200).json(imageDetails);
-        }
-        else {
+        if (data[0] != null) {
+            if (data[0].image != null) {
+                data[0].image = JSON.parse(data[0].image);
+                if (req.params.imageId === data[0].image.id) {
+                    return res.status(200).json(data[0]);
+                } else {
+                    return res.status(404).json({ msg: 'Image not found' });
+                }
+            } else {
+                return res.status(404).json({ msg: 'Image not found!' });
+            }
+        } else {
             return res.status(404).json({ msg: 'Recipe Not Found!' });
         }
     });
@@ -301,18 +327,39 @@ router.get('/:recipeId/image/:imageId', (req, res) => {
 router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) => {
     if (res.locals.user) {
         mysql.query('select image from ' + database + '.Recipe where id=(?)', [req.params.recipeId], (err, data) => {
-            if (data[0].image != null && req.params.imageId!= null) {
-                deleteFromS3(req.params.imageId)
-                mysql.query(`UPDATE ` + database + `.Recipe SET image=(?), metadata=(?) where id=(?)`, [null, null, req.params.recipeId], (err, result) => {
-                    if (err) {
-                        return res.status(204);
+
+            if (data[0] != null) {
+                if (data[0].image != null) {
+
+                    data[0].image = JSON.parse(data[0].image);
+
+                    if (req.params.imageId === data[0].image.id) {
+                        let s3Id = data[0].image.url.split('/');
+                        let imageId = s3Id[s3Id.length - 1];
+
+                        deleteFromS3(imageId, function (resp) {
+                            if (resp != null) {
+                                mysql.query(`UPDATE ` + database + `.Recipe SET image=(?), metadata=(?) where id=(?)`, [null, null, req.params.recipeId], (err, result) => {
+                                    if (err) {
+                                        return res.status(500).json({ msg: err });
+                                    } else {
+                                        return res.status(204).json();
+                                    }
+                                });
+                            } else {
+                                return res.status(500).json({ msg: 'Some error in deleting image. Please check permissions' });
+                            }
+                        });
+
                     } else {
-                        return res.status(200).json({ msg: 'Delete Image Success!' });
+                        return res.status(400).json({ msg: 'Image Not Found!' });
                     }
-                });
-            }
-            else {
-                return res.status(404).json({ msg: 'Image Not Found!' });
+                }
+                else {
+                    return res.status(404).json({ msg: 'Image Not Found!' });
+                }
+            } else {
+                return res.status(404).json({ msg: 'Image/Recipe Not Found!' });
             }
         });
     }
@@ -325,7 +372,22 @@ router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) =>
 router.get('/', (req, res) => {
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
-        mysql.query('select * from ' + database + '.Recipe where created_ts IN(SELECT MAX(created_ts)FROM ' + database + '.Recipe)', (err, data) => {
+        mysql.query(`select 
+        image,
+        id,
+        created_ts,
+        updated_ts,
+        author_id,
+        cook_time_in_min,
+        prep_time_in_min,
+        total_time_in_min,
+        title,
+        cusine,
+        servings,
+        ingredients,
+        steps,
+        nutrition_information
+        from ` + database + `.Recipe where created_ts IN(SELECT MAX(created_ts)FROM ` + database + `.Recipe)`, (err, data) => {
             if (err) {
                 return res.status(400).json({ msg: 'Fetching newest recipe failed!' });
             }
@@ -333,9 +395,14 @@ router.get('/', (req, res) => {
                 data[0].ingredients = JSON.parse(data[0].ingredients);
                 data[0].steps = JSON.parse(data[0].steps);
                 data[0].nutrition_information = JSON.parse(data[0].nutrition_information);
+                if (data[0].image != null) {
+                    data[0].image = JSON.parse(data[0].image);
+                } else {
+                    delete data[0]['image'];
+                }
                 return res.status(200).json(data[0]);
             } else {
-                return res.status(404).json({ msg: 'Not Found' });
+                return res.status(404).json({ msg: 'Recipe Not Found' });
             }
 
         });

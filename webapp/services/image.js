@@ -19,7 +19,6 @@ let upload = multer({
             var filetypes = /jpeg|jpg|png/;
             var mimetype = filetypes.test(file.mimetype);
             if (mimetype) {
-                console.log("Hey here");
                 objId = file.originalname + '_' + Date.now().toString();
                 cb(null, objId);
             } else {
@@ -30,34 +29,33 @@ let upload = multer({
     })
 });
 
-function deleteFromS3(imageId) {
+function deleteFromS3(imageId, cb) {
     var params = {
         Bucket: s3_bucket_name,
         Key: imageId
     };
     s3.deleteObject(params, function (err, data) {
         if (data) {
-            console.log("File deleted from S3 successfully!");
+            cb(data);
         }
         else {
-            console.log("Check if you have sufficient permissions : " + err);
+            cb(null);
         }
     });
 }
 
-function getMetaDataFromS3() {
-    console.log(objId)
+function getMetaDataFromS3(cb) {
     var params = {
         Bucket: s3_bucket_name,
         Key: objId
     };
     s3.headObject(params, function (err, data) {
-        if (err) 
-        console.log(err);
+        if (err) {
+            cb(null);
+        }
         else {
-            console.log('metadata :'+JSON.stringify(data));
-            return data;
-        }     
+            cb(data);
+        }
     });
 }
 
