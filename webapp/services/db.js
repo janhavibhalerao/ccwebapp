@@ -1,10 +1,11 @@
 const mysql = require('mysql');
 const config = require('./../config/config');
-const { mysql: { host, user, password, database } } = config;
+const { rds: { host, user, password, database, port } } = config;
 //mysql database connection
 module.exports = mysql.createConnection({
     host: host,
     user: user,
     password: password,
-    database: database
+    database: database,
+    port: port
    });

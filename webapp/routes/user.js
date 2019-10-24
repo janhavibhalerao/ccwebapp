@@ -8,7 +8,8 @@ const moment = require('moment');
 const mysql = require('../services/db');
 const saltRounds = 10;
 const checkUser = require('../services/auth');
-
+const config = require('./../config/config');
+const { rds: { database } } = config;
 
 // protected routes
 
@@ -37,7 +38,7 @@ router.put('/self', checkUser.authenticate, (req, res) => {
                          let update_set = Object.keys(req.body).map(value => {
                               return ` ${value}  = "${req.body[value]}"`;
                          });
-                         mysql.query(`UPDATE `+process.env.DATABASE+`.User SET ${update_set.join(" ,")}, account_updated=(?) WHERE email_address = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), res.locals.user.email_address], function (error, results) {
+                         mysql.query(`UPDATE `+database+`.User SET ${update_set.join(" ,")}, account_updated=(?) WHERE email_address = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), res.locals.user.email_address], function (error, results) {
                               if (error) {
                                    return res.status(400).json({ msg: "Update query execution failed" });
                               } else {
@@ -85,7 +86,7 @@ router.post('/', (req, res, next) => {
                const account_created = moment().format('YYYY-MM-DD HH:mm:ss');
                const account_updated = moment().format('YYYY-MM-DD HH:mm:ss');
 
-               mysql.query('insert into '+process.env.DATABASE+'.User(`id`,`first_name`,`last_name`,`password`,`email_address`,`account_created`,`account_updated`)values(?,?,?,?,?,?,?)',
+               mysql.query('insert into '+database+'.User(`id`,`first_name`,`last_name`,`password`,`email_address`,`account_created`,`account_updated`)values(?,?,?,?,?,?,?)',
                     [id, first_name, last_name, hashedPassword, email_address, account_created, account_updated], (err, result) => {
                          if (err) {
                               return res.status(400).json({ msg: ` Email: ${email_address} already exists!` });
