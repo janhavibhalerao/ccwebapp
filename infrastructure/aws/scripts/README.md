@@ -4,9 +4,9 @@ create profiles eg. DEV/PROD.
 To create the VPC :
 -->open terminal 
 -->go to respective directory 
---> sh csye6225-aws-networking-setup.sh <region> <profile> <VPCName> <vpccidr> <subnet1cidr> <subnet2cidr> <subnet3cidr>
+--> bash csye6225-aws-networking-setup.sh <region> <profile> <VPCName> <vpccidr> <subnet1cidr> <subnet2cidr> <subnet3cidr>
 
 To Delete the VPC:
 -->open terminal 
 -->go to respective directory 
--->sh csye6225-aws-networking-teardown-setup.sh <region> <profile> <VPCName>
+--> bash csye6225-aws-networking-teardown-setup.sh <region> <profile> <VPCName>
