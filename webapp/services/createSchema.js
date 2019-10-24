@@ -1,6 +1,6 @@
 const mysql = require('mysql');
 const config = require('./../config/config');
-const { rds: { host, user, password, database } } = config;
+const { db: { host, user, password, database } } = config;
 
 //mysql database connection
 var con = mysql.createConnection({
