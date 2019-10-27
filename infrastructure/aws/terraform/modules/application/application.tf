@@ -57,9 +57,10 @@ resource "aws_security_group" "database" {
 }
 
 resource "aws_instance" "web" {
-    ami           = "${var.AMI_ID}"
+    ami       = "${var.AMI_ID}"
     subnet_id = "${var.ec2subnet}"
     instance_type = "t2.micro"
+    iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
     ebs_block_device {
         device_name = "/dev/sdg"
         volume_size = 20
@@ -154,13 +155,97 @@ resource "aws_dynamodb_table" "csye6225" {
         type = "S"
     }
 
-    ttl {
-        attribute_name = "TimeToExist"
-        enabled        = false
-    }
-
     tags = {
         Name        = "dynamodb-csye6225"
         Environment = "production"
     }
+}
+
+# Creating IAM Role for code_deploy EC2
+resource "aws_iam_role" "codedeploy_ec2_instance" {
+  name = "CodeDeployEC2ServiceRole"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+
+  tags = {
+    Name = "CodeDeployEC2ServiceRole"
+  }
+}
+
+#Adding IAM Policies for EC2 to access S3
+resource "aws_iam_policy" "cd_ec2_policy" {
+  name = "CodeDeploy-EC2-S3"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "s3:Get*",
+        "s3:List*"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "ec2-s3-attach" {
+  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+  policy_arn = "${aws_iam_policy.cd_ec2_policy.arn}"
+}
+
+# Attaching IAM Role to EC2 Instance
+resource "aws_iam_instance_profile" "cd_ec2_profile" {
+  name = "CodeDeployEC2Profile"
+  role = "${aws_iam_role.codedeploy_ec2_instance.name}"
+}
+
+# create a service role for codedeploy
+resource "aws_iam_role" "codedeploy_service" {
+  name = "CodeDeployServiceRole"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": [
+          "codedeploy.amazonaws.com"
+        ]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+tags = {
+    Name = "CodeDeployEC2ServiceRole"
+  }
+}
+
+# attach AWS managed policy called AWSCodeDeployRole
+# required for deployments which are to an EC2 compute platform
+resource "aws_iam_role_policy_attachment" "codedeploy_service" {
+  role       = "${aws_iam_role.codedeploy_service.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
