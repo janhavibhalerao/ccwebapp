@@ -57,9 +57,10 @@ resource "aws_security_group" "database" {
 }
 
 resource "aws_instance" "web" {
-    ami           = "${var.AMI_ID}"
+    ami       = "${var.AMI_ID}"
     subnet_id = "${var.ec2subnet}"
     instance_type = "t2.micro"
+    iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
     ebs_block_device {
         device_name = "/dev/sdg"
         volume_size = 20
@@ -154,144 +155,97 @@ resource "aws_dynamodb_table" "csye6225" {
         type = "S"
     }
 
-    ttl {
-        attribute_name = "TimeToExist"
-        enabled        = false
-    }
-
     tags = {
         Name        = "dynamodb-csye6225"
         Environment = "production"
     }
 }
 
-resource "aws_iam_policy" "CircleCI-Upload-To-S3_policy" {
-  name        = "CircleCI-Upload-To-S3"
-  description = "Policy allows CircleCI to upload artifacts from latest successful build to dedicated S3 bucket used by code deploy."
+# Creating IAM Role for code_deploy EC2
+resource "aws_iam_role" "codedeploy_ec2_instance" {
+  name = "CodeDeployEC2ServiceRole"
 
-  policy = <<EOF
+  assume_role_policy = <<EOF
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:PutObject"
-            ],
-            "Resource": [
-                "*"
-            ]
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
 }
 EOF
+
+  tags = {
+    Name = "CodeDeployEC2ServiceRole"
+  }
 }
 
-resource "aws_iam_user_policy_attachment" "CircleCI-Upload-To-S3-attach" {
-  user       = "${var.CircleCIUser}"
-  policy_arn = "${aws_iam_policy.CircleCI-Upload-To-S3_policy.arn}"
-}
-
-resource "aws_iam_policy" "CircleCI-Code-Deploy_policy" {
-  name        = "CircleCI-Code-Deploy"
-  description = "Policy allows CircleCI to call CodeDeploy APIs to initiate application deployment on EC2 instances."
-
+#Adding IAM Policies for EC2 to access S3
+resource "aws_iam_policy" "cd_ec2_policy" {
+  name = "CodeDeploy-EC2-S3"
   policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Effect": "Allow",
       "Action": [
-        "codedeploy:RegisterApplicationRevision",
-        "codedeploy:GetApplicationRevision"
+        "s3:Get*",
+        "s3:List*"
       ],
-      "Resource": [
-        "arn:aws:codedeploy:${var.aws_region}:${var.aws_account_id}:application:${var.code_deploy_application_name}"
-      ]
-    },
-    {
       "Effect": "Allow",
-      "Action": [
-        "codedeploy:CreateDeployment",
-        "codedeploy:GetDeployment"
-      ],
-      "Resource": [
-        "*"
-      ]
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "codedeploy:GetDeploymentConfig"
-      ],
-      "Resource": [
-        "arn:aws:codedeploy:${var.aws_region}:${var.aws_account_id}:deploymentconfig:CodeDeployDefault.OneAtATime",
-        "arn:aws:codedeploy:${var.aws_region}:${var.aws_account_id}:deploymentconfig:CodeDeployDefault.HalfAtATime",
-        "arn:aws:codedeploy:${var.aws_region}:${var.aws_account_id}:deploymentconfig:CodeDeployDefault.AllAtOnce"
-      ]
+      "Resource": "*"
     }
   ]
 }
 EOF
 }
 
-resource "aws_iam_user_policy_attachment" "CircleCI-Code-Deploy-attach" {
-  user       = "${var.CircleCIUser}"
-  policy_arn = "${aws_iam_policy.CircleCI-Code-Deploy_policy.arn}"
+resource "aws_iam_role_policy_attachment" "ec2-s3-attach" {
+  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+  policy_arn = "${aws_iam_policy.cd_ec2_policy.arn}"
 }
 
-resource "aws_iam_policy" "circleci-ec2-ami_policy" {
-  name        = "circleci-ec2-ami"
-  description = "circleci-ec2-ami description"
+# Attaching IAM Role to EC2 Instance
+resource "aws_iam_instance_profile" "cd_ec2_profile" {
+  name = "CodeDeployEC2Profile"
+  role = "${aws_iam_role.codedeploy_ec2_instance.name}"
+}
 
-  policy = <<EOF
+# create a service role for codedeploy
+resource "aws_iam_role" "codedeploy_service" {
+  name = "CodeDeployServiceRole"
+
+  assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [{
+  "Statement": [
+    {
+      "Sid": "",
       "Effect": "Allow",
-      "Action" : [
-        "ec2:AttachVolume",
-        "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:CopyImage",
-        "ec2:CreateImage",
-        "ec2:CreateKeypair",
-        "ec2:CreateSecurityGroup",
-        "ec2:CreateSnapshot",
-        "ec2:CreateTags",
-        "ec2:CreateVolume",
-        "ec2:DeleteKeyPair",
-        "ec2:DeleteSecurityGroup",
-        "ec2:DeleteSnapshot",
-        "ec2:DeleteVolume",
-        "ec2:DeregisterImage",
-        "ec2:DescribeImageAttribute",
-        "ec2:DescribeImages",
-        "ec2:DescribeInstances",
-        "ec2:DescribeInstanceStatus",
-        "ec2:DescribeRegions",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeSnapshots",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeTags",
-        "ec2:DescribeVolumes",
-        "ec2:DetachVolume",
-        "ec2:GetPasswordData",
-        "ec2:ModifyImageAttribute",
-        "ec2:ModifyInstanceAttribute",
-        "ec2:ModifySnapshotAttribute",
-        "ec2:RegisterImage",
-        "ec2:RunInstances",
-        "ec2:StopInstances",
-        "ec2:TerminateInstances"
-      ],
-      "Resource" : "*"
-  }]
+      "Principal": {
+        "Service": [
+          "codedeploy.amazonaws.com"
+        ]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
 }
 EOF
+tags = {
+    Name = "CodeDeployEC2ServiceRole"
+  }
 }
 
-resource "aws_iam_user_policy_attachment" "circleci-ec2-ami-attach" {
-  user       = "${var.CircleCIUser}"
-  policy_arn = "${aws_iam_policy.circleci-ec2-ami_policy.arn}"
+# attach AWS managed policy called AWSCodeDeployRole
+# required for deployments which are to an EC2 compute platform
+resource "aws_iam_role_policy_attachment" "codedeploy_service" {
+  role       = "${aws_iam_role.codedeploy_service.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
