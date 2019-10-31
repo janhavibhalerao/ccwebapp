@@ -380,3 +380,42 @@ resource "aws_iam_user_policy_attachment" "circleci-ec2-ami-attach" {
   user       = "${var.CircleCIUser}"
   policy_arn = "${aws_iam_policy.circleci-ec2-ami_policy.arn}"
 }
+
+resource "aws_kms_key" "code_deploy_mykey" {
+  description = "This key is used to encrypt bucket objects"
+  deletion_window_in_days = 10
+}
+
+resource "aws_s3_bucket" "code_deploy_s3_bucket" {
+    bucket = "${var.CODE_DEPLOY_S3_BUCKET_NAME}"
+    force_destroy = true
+    acl    = "private"
+    
+    server_side_encryption_configuration {
+        rule {
+            apply_server_side_encryption_by_default {
+            kms_master_key_id = "${aws_kms_key.code_deploy_mykey.arn}"
+            sse_algorithm     = "aws:kms"
+            }   
+        }
+    }
+
+     lifecycle_rule {
+        enabled = true
+
+        expiration {
+            days = 60
+        }
+    }
+    tags = {
+        Name = "code_deploy_s3_bucket"
+    }
+}
+
+resource "aws_s3_bucket_public_access_block" "code_deploy_s3_block" {
+  bucket = "${aws_s3_bucket.code_deploy_s3_bucket.id}"
+  block_public_acls   = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
+}
