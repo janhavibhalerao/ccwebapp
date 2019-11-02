@@ -45,3 +45,19 @@ variable "ec2Key" {
     description = "EC2 key pair"
     type = string
 }
+
+variable "CircleCIUser" {
+  description = "Enter a CircleCIUser"
+    type = string
+    default = "circleci"
+}
+
+variable "aws_account_id" {
+    description = "Enter AWS_ACCOUNT_ID"
+    type = string
+}
+variable "code_deploy_application_name" {
+    description = "Enter CODE_DEPLOY_APPLICATION_NAME"
+    type = string
+    default = "csye6225-webapp"
+}

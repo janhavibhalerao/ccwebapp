@@ -21,7 +21,6 @@ let upload = multer({
             let mimetype = filetypes.test(file.mimetype);
             if (mimetype) {
                 let fileName = file.originalname.replace(/\s/g,'');
-                console.log(fileName);
                 objId = fileName + '_' + Date.now().toString();
                 cb(null, objId);
             } else {

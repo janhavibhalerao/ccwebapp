@@ -22,4 +22,6 @@ module "application" {
     aws_subnet_group = "${module.networking.subnet_group}"
     ec2subnet = "${module.networking.subnet_id}"
     ec2Key = "${var.ec2Key}"
+    aws_account_id = "${var.aws_account_id}"
+    aws_region = "${var.aws_region}"
 }
