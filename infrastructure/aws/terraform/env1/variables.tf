@@ -61,3 +61,8 @@ variable "code_deploy_application_name" {
     type = string
     default = "csye6225-webapp"
 }
+
+variable "AWS_CD_S3_BUCKET_NAME" {
+    description = "Enter a code deploy s3 bucket name. Example (codedeploy.your-domain-name.tld)"
+    type = string
+}

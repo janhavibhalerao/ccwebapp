@@ -134,6 +134,40 @@ resource "aws_s3_bucket_public_access_block" "s3_block" {
 
 }
 
+resource "aws_s3_bucket" "cd_s3_bucket" {
+    bucket = "${var.AWS_CD_S3_BUCKET_NAME}"
+    force_destroy = true
+    acl    = "private"
+    
+    server_side_encryption_configuration {
+        rule {
+            apply_server_side_encryption_by_default {
+            kms_master_key_id = "${aws_kms_key.mykey.arn}"
+            sse_algorithm     = "aws:kms"
+            }   
+        }
+    }
+
+     lifecycle_rule {
+        id = "cleanup" 
+        enabled = true
+        expiration {
+            days = 60
+        }
+    }
+    tags = {
+        Name = "aws_cd_s3_bucket"
+    }
+}
+
+resource "aws_s3_bucket_public_access_block" "cd_s3_block" {
+  bucket = "${aws_s3_bucket.cd_s3_bucket.id}"
+  block_public_acls   = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
+}
+
 
 resource "aws_db_instance" "db-instance" {
     engine = "mysql"
@@ -221,9 +255,16 @@ resource "aws_iam_policy" "cd_ec2_policy" {
 EOF
 }
 
+// EC2 S3 Policy
 resource "aws_iam_role_policy_attachment" "ec2-s3-attach" {
   role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
   policy_arn = "${aws_iam_policy.cd_ec2_policy.arn}"
+}
+
+// Cloud Watch Agent Policy
+resource "aws_iam_role_policy_attachment" "ec2-cloudwatch-attach" {
+  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 # Attaching IAM Role to EC2 Instance
