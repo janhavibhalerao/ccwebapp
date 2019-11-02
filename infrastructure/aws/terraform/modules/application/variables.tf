@@ -9,7 +9,7 @@ variable "aws_subnet_group" {}
 variable "ec2subnet" {}
 
 variable "AWS_S3_BUCKET_NAME" {
-    description = "Enter a s3 bucket name. Example (webapp.your-domain-name.tld)"
+    description = "Enter a s3 bucket name for image. Example (webapp.your-domain-name.tld)"
     type = string
 }
 

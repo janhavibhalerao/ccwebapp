@@ -213,6 +213,7 @@ resource "aws_dynamodb_table" "csye6225" {
 # Creating IAM Role for code_deploy EC2
 resource "aws_iam_role" "codedeploy_ec2_instance" {
   name = "CodeDeployEC2ServiceRole"
+  description = "Role for ec2"
 
   assume_role_policy = <<EOF
 {
@@ -238,6 +239,7 @@ EOF
 #Adding IAM Policies for EC2 to access S3
 resource "aws_iam_policy" "cd_ec2_policy" {
   name = "CodeDeploy-EC2-S3"
+  description = "Policy which allows ec2 role to access S3"
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -248,18 +250,62 @@ resource "aws_iam_policy" "cd_ec2_policy" {
         "s3:List*"
       ],
       "Effect": "Allow",
-      "Resource": "*"
+      "Resource": [
+        "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
+      ]
     }
   ]
 }
 EOF
 }
 
+#Adding IAM Policies for EC2 to access S3
+resource "aws_iam_policy" "iam_S3_access" {
+  name = "Attachments-Access-To-S3-Bucket"
+  description = "Policy for uploading attachments into S3"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+       "s3:Get*",
+       "s3:List*",
+       "s3:Delete*",
+       "s3:Put*",
+       "s3:*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:s3:::*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+
 // EC2 S3 Policy
 resource "aws_iam_role_policy_attachment" "ec2-s3-attach" {
   role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
   policy_arn = "${aws_iam_policy.cd_ec2_policy.arn}"
 }
+
+// EC2 role attachments S3 Policy
+resource "aws_iam_role_policy_attachment" "ec2-s3-all" {
+  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+  policy_arn = "${aws_iam_policy.iam_S3_access.arn}"
+}
+
+
+// EC2 role attachments S3 Policy
+resource "aws_iam_role_policy_attachment" "ec2-rds-acccess" {
+  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
+}
+
+
 
 // Cloud Watch Agent Policy
 resource "aws_iam_role_policy_attachment" "ec2-cloudwatch-attach" {
@@ -276,7 +322,7 @@ resource "aws_iam_instance_profile" "cd_ec2_profile" {
 # create a service role for codedeploy
 resource "aws_iam_role" "codedeploy_service" {
   name = "CodeDeployServiceRole"
-
+  description = "Role for code deploy"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -295,7 +341,7 @@ resource "aws_iam_role" "codedeploy_service" {
 }
 EOF
 tags = {
-    Name = "CodeDeployEC2ServiceRole"
+    Name = "CodeDeployServiceRole"
   }
 }
 
@@ -319,9 +365,9 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3_policy" {
             "Action": [
                 "s3:PutObject"
             ],
-            "Resource": [
-                "*"
-            ]
+             "Resource": [
+        "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
+      ]
         }
     ]
 }
@@ -384,7 +430,7 @@ resource "aws_iam_user_policy_attachment" "CircleCI-Code-Deploy-attach" {
 
 resource "aws_iam_policy" "circleci-ec2-ami_policy" {
   name        = "circleci-ec2-ami"
-  description = "circleci-ec2-ami description"
+  description = "Policy which allows circleci user to access ec2"
 
   policy = <<EOF
 {
