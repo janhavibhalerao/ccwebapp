@@ -61,3 +61,8 @@ variable "code_deploy_application_name" {
     type = string
     default = "csye6225-webapp"
 }
+variable "code_deploy_bucket" {
+    description = "Enter CODE_DEPLOY_BUCKET"
+    type = string
+    default = "codedeploy.janhavibhalerao.me"
+}

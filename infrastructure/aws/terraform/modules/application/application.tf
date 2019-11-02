@@ -214,7 +214,9 @@ resource "aws_iam_policy" "cd_ec2_policy" {
         "s3:List*"
       ],
       "Effect": "Allow",
-      "Resource": "*"
+      "Resource": [
+        "arn:aws:s3:::${var.code_deploy_bucket}"
+      ]
     }
   ]
 }
@@ -278,9 +280,9 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3_policy" {
             "Action": [
                 "s3:PutObject"
             ],
-            "Resource": [
-                "*"
-            ]
+             "Resource": [
+        "arn:aws:s3:::${var.code_deploy_bucket}"
+      ]
         }
     ]
 }
