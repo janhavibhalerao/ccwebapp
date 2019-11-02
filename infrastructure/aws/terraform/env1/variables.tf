@@ -40,3 +40,8 @@ variable "AWS_DB_PASSWORD" {
     description = "Enter an master db password."
     type = string
 }
+
+variable "ec2Key" {
+    description = "EC2 key pair"
+    type = string
+}

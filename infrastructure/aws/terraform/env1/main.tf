@@ -21,4 +21,5 @@ module "application" {
     AMI_ID = "${var.AMI_ID}"
     aws_subnet_group = "${module.networking.subnet_group}"
     ec2subnet = "${module.networking.subnet_id}"
+    ec2Key = "${var.ec2Key}"
 }

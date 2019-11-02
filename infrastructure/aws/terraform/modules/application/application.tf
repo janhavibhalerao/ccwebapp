@@ -35,6 +35,13 @@ resource "aws_security_group" "application" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
+    egress {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
     tags = {
         Name = "application"
     }
@@ -56,10 +63,16 @@ resource "aws_security_group" "database" {
     }
 }
 
+resource "aws_key_pair" "terraform_ec2_key" {
+  key_name = "terraform_ec2_key"
+  public_key = "${var.ec2Key}"
+}
+
 resource "aws_instance" "web" {
     ami       = "${var.AMI_ID}"
     subnet_id = "${var.ec2subnet}"
     instance_type = "t2.micro"
+    key_name = "terraform_ec2_key"
     iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
     ebs_block_device {
         device_name = "/dev/sdg"
@@ -74,6 +87,8 @@ resource "aws_instance" "web" {
     vpc_security_group_ids = ["${aws_security_group.application.id}"]
     depends_on = [aws_db_instance.db-instance]
 }
+
+
 
 resource "aws_kms_key" "mykey" {
   description = "This key is used to encrypt bucket objects"

@@ -283,28 +283,33 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
                 if (result[0].image != null) {
                     return res.status(400).json({ msg: 'Please delete the previous image before re-uploading' });
                 } else {
+
                     singleUpload(req, res, (err) => {
                         if (err) {
                             return res.status(400).json({ msg: err });
                         } else {
-                            let image = {
-                                'id': uuid(),
-                                'url': req.file.location
-                            };
-                            getMetaDataFromS3(function (metadata) {
-                                if (metadata != null) {
-                                    mysql.query(`UPDATE ` + database + `.Recipe SET image=(?), metadata=(?) where id=(?)`, [JSON.stringify(image), JSON.stringify(metadata), req.params.id], (err, result) => {
-                                        if (!err) {
-                                            return res.json(image);
-                                        } else {
-                                            return res.status(500).json({ msg: 'Some error while storing image data to DB' });
-                                        }
-                                    });
-                                } else {
-                                    return res.status(500).json({ msg: 'Issue in getting metadata' });
-                                }
+                            if (req.file == null) {
+                                return res.status(400).json({ msg: 'Invalid Request body'});
+                            } else {
+                                let image = {
+                                    'id': uuid(),
+                                    'url': req.file.location
+                                };
+                                getMetaDataFromS3(function (metadata) {
+                                    if (metadata != null) {
+                                        mysql.query(`UPDATE ` + database + `.Recipe SET image=(?), metadata=(?) where id=(?)`, [JSON.stringify(image), JSON.stringify(metadata), req.params.id], (err, result) => {
+                                            if (!err) {
+                                                return res.json(image);
+                                            } else {
+                                                return res.status(500).json({ msg: 'Some error while storing image data to DB' });
+                                            }
+                                        });
+                                    } else {
+                                        return res.status(500).json({ msg: 'Issue in getting metadata' });
+                                    }
 
-                            });
+                                });
+                            }
                         }
                     });
 
