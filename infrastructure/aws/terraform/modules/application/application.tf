@@ -35,6 +35,13 @@ resource "aws_security_group" "application" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
+    egress {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+
     tags = {
         Name = "application"
     }
@@ -56,10 +63,16 @@ resource "aws_security_group" "database" {
     }
 }
 
+resource "aws_key_pair" "terraform_ec2_key" {
+  key_name = "terraform_ec2_key"
+  public_key = "${var.ec2Key}"
+}
+
 resource "aws_instance" "web" {
     ami       = "${var.AMI_ID}"
     subnet_id = "${var.ec2subnet}"
     instance_type = "t2.micro"
+    key_name = "terraform_ec2_key"
     iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
     ebs_block_device {
         device_name = "/dev/sdg"
@@ -68,12 +81,27 @@ resource "aws_instance" "web" {
         delete_on_termination = true
     }
 
-    tags = {
+user_data = <<EOF
+#!/bin/bash
+####################################################
+# Configure Node ENV_Variables                     #
+####################################################
+sudo mkdir -p webapp/var/
+cd /webapp/var
+sudo sh -c 'echo NODE_DB_USER=${var.database_username}>.env'
+sudo sh -c 'echo NODE_DB_PASS=${var.AWS_DB_PASSWORD}>>.env'
+sudo sh -c 'echo NODE_DB_HOST=${aws_db_instance.db-instance.address}>>.env'
+sudo sh -c 'echo NODE_S3_BUCKET="${var.AWS_S3_BUCKET_NAME}>>.env'
+EOF
+
+  tags = {
         Name = "csye6225-ec2"
     }
     vpc_security_group_ids = ["${aws_security_group.application.id}"]
     depends_on = [aws_db_instance.db-instance]
 }
+
+
 
 resource "aws_kms_key" "mykey" {
   description = "This key is used to encrypt bucket objects"
@@ -117,6 +145,40 @@ resource "aws_s3_bucket_public_access_block" "s3_block" {
   ignore_public_acls = true
   restrict_public_buckets = true
 
+}
+
+resource "aws_s3_bucket" "cd_s3_bucket" {
+    bucket = "${var.AWS_CD_S3_BUCKET_NAME}"
+    force_destroy = true
+    acl    = "private"
+    
+    server_side_encryption_configuration {
+        rule {
+            apply_server_side_encryption_by_default {
+            kms_master_key_id = "${aws_kms_key.mykey.arn}"
+            sse_algorithm     = "aws:kms"
+            }   
+        }
+    }
+
+     lifecycle_rule {
+        id = "cleanup" 
+        enabled = true
+        expiration {
+            days = 60
+        }
+    }
+    tags = {
+        Name = "aws_cd_s3_bucket"
+    }
+}
+
+resource "aws_s3_bucket_public_access_block" "cd_s3_block" {
+  bucket = "${aws_s3_bucket.cd_s3_bucket.id}"
+  block_public_acls   = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
 }
 
 
@@ -164,6 +226,7 @@ resource "aws_dynamodb_table" "csye6225" {
 # Creating IAM Role for code_deploy EC2
 resource "aws_iam_role" "codedeploy_ec2_instance" {
   name = "CodeDeployEC2ServiceRole"
+  description = "Role for ec2"
 
   assume_role_policy = <<EOF
 {
@@ -189,6 +252,7 @@ EOF
 #Adding IAM Policies for EC2 to access S3
 resource "aws_iam_policy" "cd_ec2_policy" {
   name = "CodeDeploy-EC2-S3"
+  description = "Policy which allows ec2 role to access S3"
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -199,16 +263,67 @@ resource "aws_iam_policy" "cd_ec2_policy" {
         "s3:List*"
       ],
       "Effect": "Allow",
-      "Resource": "*"
+      "Resource": [
+        "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
+      ]
     }
   ]
 }
 EOF
 }
 
+#Adding IAM Policies for EC2 to access S3
+resource "aws_iam_policy" "iam_S3_access" {
+  name = "Attachments-Access-To-S3-Bucket"
+  description = "Policy for uploading attachments into S3"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+       "s3:Get*",
+       "s3:List*",
+       "s3:Delete*",
+       "s3:Put*",
+       "s3:*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:s3:::*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+
+// EC2 S3 Policy
 resource "aws_iam_role_policy_attachment" "ec2-s3-attach" {
   role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
   policy_arn = "${aws_iam_policy.cd_ec2_policy.arn}"
+}
+
+// EC2 role attachments S3 Policy
+resource "aws_iam_role_policy_attachment" "ec2-s3-all" {
+  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+  policy_arn = "${aws_iam_policy.iam_S3_access.arn}"
+}
+
+
+// EC2 role attachments S3 Policy
+resource "aws_iam_role_policy_attachment" "ec2-rds-acccess" {
+  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
+}
+
+
+
+// Cloud Watch Agent Policy
+resource "aws_iam_role_policy_attachment" "ec2-cloudwatch-attach" {
+  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
 # Attaching IAM Role to EC2 Instance
@@ -220,7 +335,7 @@ resource "aws_iam_instance_profile" "cd_ec2_profile" {
 # create a service role for codedeploy
 resource "aws_iam_role" "codedeploy_service" {
   name = "CodeDeployServiceRole"
-
+  description = "Role for code deploy"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -239,7 +354,7 @@ resource "aws_iam_role" "codedeploy_service" {
 }
 EOF
 tags = {
-    Name = "CodeDeployEC2ServiceRole"
+    Name = "CodeDeployServiceRole"
   }
 }
 
@@ -263,9 +378,9 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3_policy" {
             "Action": [
                 "s3:PutObject"
             ],
-            "Resource": [
-                "*"
-            ]
+             "Resource": [
+        "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
+      ]
         }
     ]
 }
@@ -328,7 +443,7 @@ resource "aws_iam_user_policy_attachment" "CircleCI-Code-Deploy-attach" {
 
 resource "aws_iam_policy" "circleci-ec2-ami_policy" {
   name        = "circleci-ec2-ami"
-  description = "circleci-ec2-ami description"
+  description = "Policy which allows circleci user to access ec2"
 
   policy = <<EOF
 {
