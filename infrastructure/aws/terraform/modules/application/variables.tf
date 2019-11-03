@@ -47,3 +47,9 @@ variable "code_deploy_application_name" {
     type = string
     default = "csye6225-webapp"
 }
+
+variable "database_username" {
+    description = "Enter MYSQL User name"
+    type = string
+    default = "dbuser"
+}

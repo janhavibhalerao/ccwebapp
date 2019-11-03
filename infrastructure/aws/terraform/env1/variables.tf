@@ -66,3 +66,9 @@ variable "AWS_CD_S3_BUCKET_NAME" {
     description = "Enter a code deploy s3 bucket name. Example (codedeploy.your-domain-name.tld)"
     type = string
 }
+
+variable "database_username" {
+    description = "Enter MYSQL User name"
+    type = string
+    default = "dbuser"
+}
