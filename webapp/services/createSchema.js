@@ -1,26 +1,32 @@
 const mysql = require('mysql');
-const config = require('./../config/config');
-const { db: { host, user, password, database, port } } = config;
+require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
+const Config = require('../config/config');
+const conf = new Config();
+const log4js = require('log4js');
+	log4js.configure({
+	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
+	  categories: { default: { appenders: ['logs'], level: 'info' } }
+    });
+const logger = log4js.getLogger('logs');
 
 //mysql database connection
 var con = mysql.createConnection({
-    host: host,
-    user: user,
-    password: password,
-    port: port
+    host     : conf.db.host,
+    user     : conf.db.user,
+    port 	 : '3306',
+    password : conf.db.password,
+    database : conf.db.database
 });
 
 con.connect(function (err) {
-    if (err) throw err;
+    if (err) {
+        logger.fatal(err);
+        throw err;
+    }
     else {
-        console.log("Connected!");
-        con.query("DROP DATABASE IF EXISTS " + database + ";", function (err, result) {
-            if (err) throw err;
-            else {
-                con.query("CREATE DATABASE " + database, function (err, result) {
-                    if (err) throw err;
-                    else {
-                        var sql = `CREATE TABLE ` + database + `.User(
+            console.log("Connected!");
+            logger.info('Connected to database!');
+            var sql = `CREATE TABLE IF NOT EXISTS User(
             id varchar(36) NOT NULL,
             first_name varchar(45) NOT NULL,
             last_name varchar(45) NOT NULL,
@@ -31,10 +37,13 @@ con.connect(function (err) {
             PRIMARY KEY (id),
             UNIQUE KEY email_address_UNIQUE (email_address)
           ) ENGINE=InnoDB DEFAULT CHARSET=latin1;`;
-                        con.query(sql, function (err, result) {
-                            if (err) throw err;
-                            else {
-                                var sql1 = `CREATE TABLE ` + database + `.Recipe (
+            con.query(sql, function (err, result) {
+                    if (err) {
+                        logger.fatal(err);
+                        throw err;
+                    }
+                    else {
+                            var sql1 = `CREATE TABLE IF NOT EXISTS Recipe (
                                     
                 id varchar(36) NOT NULL COMMENT 'Creating Recipe',
                 created_ts datetime NOT NULL,
@@ -53,26 +62,28 @@ con.connect(function (err) {
                 metadata json,
                 PRIMARY KEY (id),
                 KEY fk_recipe_author_idx (author_id),
-                CONSTRAINT fk_recipe_author FOREIGN KEY (author_id) REFERENCES `+ database + `.User (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+                CONSTRAINT fk_recipe_author FOREIGN KEY (author_id) REFERENCES User (id) ON DELETE NO ACTION ON UPDATE NO ACTION
               ) ENGINE=InnoDB DEFAULT CHARSET=latin1;`;
 
                                 con.query(sql1, function (err, result) {
-                                    if (err) throw err;
+                                    if (err) {
+                                        logger.fatal(err);
+                                        throw err;
+                                    }
                                     else {
-                                        console.log('Recipe Table created!');
+                                        logger.info('Recipe Table checked!');
+                                        console.log('Recipe Table checked!');
                                         process.exit(0);
                                     }
                                 });
 
                             }
-                            console.log("User Table created!");
+                            logger.info('User Table checked!');
+                            console.log("User Table checked!");
                         });
                     }
-                    console.log("Database created!");
-                });
-
-            }
-
-        });
-    }
+                    logger.info('Database checked!');
+                    console.log("Database checked!");
+         
+    
 });

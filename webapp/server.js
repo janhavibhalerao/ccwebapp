@@ -3,10 +3,12 @@ const app = express();
 const bodyParser = require('body-parser');
 const usersRouter = require('./routes/user');
 const recipeRouter = require('./routes/recipe');
-const config = require('./config/config');
-const { port} = config;
-
-
+const log4js = require('log4js');
+	log4js.configure({
+	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
+	  categories: { default: { appenders: ['logs'], level: 'info' } }
+    });
+const logger = log4js.getLogger('logs');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/v1/user', usersRouter);
@@ -24,10 +26,17 @@ app.use((error, req, res, next) => {
     res.json();
 });
 
-// start server
-const PORT = port|| 3000;
-app.listen(PORT,() => {
-    console.log(`Server listening on port: ${PORT}`);
+
+// app.listen(PORT,() => {
+//     console.log(`Server listening on port: ${PORT}`);
+// });
+
+//create app server
+var server = app.listen(3000, function () {
+    logger.trace('App started');
+    var host = server.address().address
+    var port = server.address().port
+    console.log("RMS app listening to http://%s:%s", host, port)
 });
   
 module.exports = app;

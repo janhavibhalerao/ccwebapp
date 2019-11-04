@@ -9,7 +9,12 @@ variable "aws_subnet_group" {}
 variable "ec2subnet" {}
 
 variable "AWS_S3_BUCKET_NAME" {
-    description = "Enter a s3 bucket name. Example (webapp.your-domain-name.tld)"
+    description = "Enter a s3 bucket name for image. Example (webapp.your-domain-name.tld)"
+    type = string
+}
+
+variable "AWS_CD_S3_BUCKET_NAME" {
+    description = "Enter a code deploy s3 bucket name. Example (codedeploy.your-domain-name.tld)"
     type = string
 }
 
@@ -18,3 +23,33 @@ variable "AWS_DB_PASSWORD" {
     type = string
 }
 
+variable "ec2Key" {
+    description = "EC2 key pair"
+    type = string
+}
+
+variable "CircleCIUser" {
+    description = "Enter a CircleCIUser"
+    type = string
+    default = "circleci"
+}
+variable "aws_region" {
+    description = "Enter AWS_REGION. Example (us-east-1) "
+    type = string
+    default = "us-east-1"
+}
+variable "aws_account_id" {
+    description = "Enter AWS_ACCOUNT_ID"
+    type = string
+}
+variable "code_deploy_application_name" {
+    description = "Enter CODE_DEPLOY_APPLICATION_NAME"
+    type = string
+    default = "csye6225-webapp"
+}
+
+variable "database_username" {
+    description = "Enter MYSQL User name"
+    type = string
+    default = "dbuser"
+}

@@ -16,9 +16,14 @@ module "networking" {
 module "application" {
     source = "../modules/application"
     AWS_S3_BUCKET_NAME = "${var.AWS_S3_BUCKET_NAME}"
+    AWS_CD_S3_BUCKET_NAME = "${var.AWS_CD_S3_BUCKET_NAME}"
     AWS_DB_PASSWORD = "${var.AWS_DB_PASSWORD}"
     aws_vpc_id = "${module.networking.vpc_id}"
     AMI_ID = "${var.AMI_ID}"
     aws_subnet_group = "${module.networking.subnet_group}"
     ec2subnet = "${module.networking.subnet_id}"
+    ec2Key = "${var.ec2Key}"
+    aws_account_id = "${var.aws_account_id}"
+    aws_region = "${var.aws_region}"
+    database_username = "${var.database_username}"
 }
