@@ -120,13 +120,6 @@ EOF
     depends_on = [aws_db_instance.db-instance, aws_s3_bucket.s3_bucket]
 }
 
-
-
-resource "aws_kms_key" "mykey" {
-  description = "This key is used to encrypt bucket objects"
-  deletion_window_in_days = 10
-}
-
 resource "aws_s3_bucket" "s3_bucket" {
     bucket = "${var.AWS_S3_BUCKET_NAME}"
     force_destroy = true
@@ -135,8 +128,7 @@ resource "aws_s3_bucket" "s3_bucket" {
     server_side_encryption_configuration {
         rule {
             apply_server_side_encryption_by_default {
-            kms_master_key_id = "${aws_kms_key.mykey.arn}"
-            sse_algorithm     = "aws:kms"
+              sse_algorithm     = "AES256"
             }   
         }
     }
@@ -174,8 +166,7 @@ resource "aws_s3_bucket" "cd_s3_bucket" {
     server_side_encryption_configuration {
         rule {
             apply_server_side_encryption_by_default {
-            kms_master_key_id = "${aws_kms_key.mykey.arn}"
-            sse_algorithm     = "aws:kms"
+              sse_algorithm     = "AES256"
             }   
         }
     }
