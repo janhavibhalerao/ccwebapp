@@ -4,8 +4,6 @@ const multerS3 = require('multer-s3');
 require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
 const Config = require('../config/config');
 const conf = new Config();
-var SDC = require('statsd-client'),
-    sdc = new SDC({ host: 'localhost' });
 const log4js = require('log4js');
 log4js.configure({
     appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
@@ -69,6 +67,7 @@ let upload = multer({
                 objId = fileName + '_' + Date.now().toString();
                 cb(null, objId);
             } else {
+                logger.warn('File upload only supports the following filetypes - ' + filetypes);
                 cb("Error: File upload only supports the following filetypes - " + filetypes);
 
             }
@@ -86,6 +85,7 @@ function deleteFromS3(imageId, cb) {
             cb(data);
         }
         else {
+            logger.fatal(err);
             cb(null);
         }
     });
@@ -98,6 +98,7 @@ function getMetaDataFromS3(cb) {
     };
     s3.headObject(params, function (err, data) {
         if (err) {
+            logger.fatal(err);
             cb(null);
         }
         else {

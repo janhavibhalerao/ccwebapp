@@ -12,9 +12,10 @@ const logger = log4js.getLogger('logs');
 
 // To authenticate User (Basic Auth)
 exports.authenticate = (req, res, next) => {
-
+    sdc.increment('Auth Check Triggered');
     let authHeader = req.headers.authorization;
     if (!authHeader) {
+        logger.error('UnAuthorized');
         return res.status(401).json({ msg: 'Unauthorized' });
     }
 
@@ -27,13 +28,16 @@ exports.authenticate = (req, res, next) => {
                 if (result) {
                     const { password, ...userWithoutPassword } = data[0];
                     res.locals.user = userWithoutPassword;
+                    logger.info('User Authorization Success');
                     next(); // authorized
                 } else {
+                    logger.error('UnAuthorized');
                     return res.status(401).json({ msg: 'Unauthorized' });
                 }
             });
 
         } else {
+            logger.error('UnAuthorized');
             return res.status(401).json({ msg: 'Unauthorized' });
         }
     })
