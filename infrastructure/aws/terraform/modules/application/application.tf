@@ -107,10 +107,10 @@ Content-Disposition: attachment; filename="userdata.txt"
 cd /home/centos
 sudo mkdir -p webapp/var
 cd webapp/var
-echo 'NODE_DB_USER=dbuser'>.env
-echo 'NODE_DB_PASS=Ravi_121992'>>.env
-echo 'NODE_DB_HOST=csye6225-fall2019.csbgk3h1vbb7.us-east-1.rds.amazonaws.com'>>.env
-echo 'NODE_S3_BUCKET=rms.ravi-pilla.me'>>.env
+echo 'NODE_DB_USER=${var.database_username}'>.env
+echo 'NODE_DB_PASS=${var.AWS_DB_PASSWORD}'>>.env
+echo 'NODE_DB_HOST=${aws_db_instance.db-instance.address}'>>.env
+echo 'NODE_S3_BUCKET=${var.AWS_CD_S3_BUCKET_NAME}'>>.env
 EOF
 
   tags = {
