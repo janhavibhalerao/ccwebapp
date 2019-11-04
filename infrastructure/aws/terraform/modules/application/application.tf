@@ -81,24 +81,22 @@ resource "aws_instance" "web" {
         delete_on_termination = true
     }
 
-user_data = <<EOF
+user_data = <<-EOF
 #!/bin/bash
 ####################################################
 # Configure Node ENV_Variables                     #
 ####################################################
-sudo mkdir -p webapp/var/
-cd /webapp/var
-sudo sh -c 'echo NODE_DB_USER=${var.database_username}>.env'
-sudo sh -c 'echo NODE_DB_PASS=${var.AWS_DB_PASSWORD}>>.env'
-sudo sh -c 'echo NODE_DB_HOST=${aws_db_instance.db-instance.address}>>.env'
-sudo sh -c 'echo NODE_S3_BUCKET="${var.AWS_S3_BUCKET_NAME}>>.env'
+sudo sh -c 'echo NODE_DB_USER=${var.database_username}>/var/.env'
+sudo sh -c 'echo NODE_DB_PASS=${var.AWS_DB_PASSWORD}>>/var/.env'
+sudo sh -c 'echo NODE_DB_HOST=${aws_db_instance.db-instance.address}>>/var/.env'
+sudo sh -c 'echo NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}>>/var/.env'
 EOF
 
   tags = {
         Name = "csye6225-ec2"
     }
     vpc_security_group_ids = ["${aws_security_group.application.id}"]
-    depends_on = [aws_db_instance.db-instance]
+    depends_on = [aws_db_instance.db-instance, aws_s3_bucket.s3_bucket]
 }
 
 
@@ -495,3 +493,30 @@ resource "aws_iam_user_policy_attachment" "circleci-ec2-ami-attach" {
   user       = "${var.CircleCIUser}"
   policy_arn = "${aws_iam_policy.circleci-ec2-ami_policy.arn}"
 }
+
+/*resource "aws_codedeploy_app" "code_deploy_application" {  
+    compute_platform = "Server"  
+    name = "csye6225-webapp"
+}
+
+resource "aws_codedeploy_deployment_group" "cd_deployment_group" {  
+    app_name  = "${aws_codedeploy_app.code_deploy_application.name}"  
+    deployment_group_name = "csye6225-webapp-deployment"  
+    service_role_arn = "${aws_iam_role.codedeploy_service.arn}"
+     
+    ec2_tag_filter {      
+        key   = "Name"      
+        type  = "KEY_AND_VALUE"      
+        value = "csye6225-ec2"    
+    }  
+
+    deployment_config_name = "CodeDeployDefault.AllAtOnce"
+    deployment_style {    
+        deployment_type   = "IN_PLACE"  
+    }
+
+    auto_rollback_configuration {    
+      enabled = true    
+      events  = ["DEPLOYMENT_FAILURE"]  
+    }
+}*/
