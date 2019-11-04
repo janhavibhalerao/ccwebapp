@@ -505,6 +505,7 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
 
   deployment_config_name = "CodeDeployDefault.AllAtOnce"
   deployment_style {
+    deployment_option = "WITHOUT_TRAFFIC_CONTROL"
     deployment_type   = "IN_PLACE"
   }
   ec2_tag_set {
