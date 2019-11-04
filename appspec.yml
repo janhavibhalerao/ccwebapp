@@ -7,10 +7,10 @@ files:
 
 hooks:
 AfterInstall:
-- location: ./webapp/infrastructure/aws/codedeploy/afterInstall.sh
+- location: ./webapp/afterInstall.sh
   timeout: 180
   runas: root
 ApplicationStart:
-- location: ./webapp/infrastructure/aws/codedeploy/applicationStart.sh
+- location: ./webapp/applicationStart.sh
   timeout: 180
   runas: centos
