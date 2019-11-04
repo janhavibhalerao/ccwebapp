@@ -35,7 +35,7 @@
 ## Deploy Instructions
 
 ## Running Tests
-Run npm start to start node server & npm test for running test cases
+Run npm start to start node server & npm test for running test case
 
 ## CI/CD
 Using CircleCI & CodeDeploy
