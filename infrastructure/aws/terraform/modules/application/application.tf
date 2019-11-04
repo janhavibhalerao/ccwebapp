@@ -375,9 +375,6 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3_policy" {
             "Effect": "Allow",
             "Action": [
                 "s3:PutObject",
-                "s3:PutObjectAcl",
-                "s3:GetObject",
-                "s3:DeleteObject"
             ],
              "Resource": [
         "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
