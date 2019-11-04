@@ -2,7 +2,7 @@
 
 pwd
 whoami
-cd /home/centos/webapp
+cd /home/centos/webapp/webapp
 if [ -d "var" ] 
 then
     echo "Directory /home/centos/webapp/var exists." 
@@ -19,7 +19,7 @@ else
     sudo chmod 666 logs/webapp.log
 fi
 
-sudo cp /var/.env /home/centos/webapp/var
+sudo cp /var/.env /home/centos/webapp/webapp/var
 sudo chmod 777 .env
 pwd
 sudo pm2 kill

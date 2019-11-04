@@ -18,7 +18,7 @@ aws configure list
 
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/home/centos/infrastructure/aws/codedeploy/cloudwatch-config.json -s
 
-cd /home/centos/webapp/
+cd /home/centos/webapp/webapp
 pwd
 sudo npm install
 sudo npm install pm2 -g
