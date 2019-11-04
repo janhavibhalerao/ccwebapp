@@ -91,7 +91,7 @@ cd /webapp/var
 sudo sh -c 'echo NODE_DB_USER=${var.database_username}>.env'
 sudo sh -c 'echo NODE_DB_PASS=${var.AWS_DB_PASSWORD}>>.env'
 sudo sh -c 'echo NODE_DB_HOST=${aws_db_instance.db-instance.address}>>.env'
-sudo sh -c 'echo NODE_S3_BUCKET="${var.AWS_S3_BUCKET_NAME}>>.env'
+sudo sh -c 'echo NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}>>.env'
 EOF
 
   tags = {
@@ -496,29 +496,30 @@ resource "aws_iam_user_policy_attachment" "circleci-ec2-ami-attach" {
   policy_arn = "${aws_iam_policy.circleci-ec2-ami_policy.arn}"
 }
 
-resource "aws_codedeploy_app" "code_deploy_application" {  
-    compute_platform = "Server"  
-    name = "csye6225-webapp"
+resource "aws_codedeploy_app" "cd-webapp" {
+  name             = "csye6225-webapp"
 }
 
-resource "aws_codedeploy_deployment_group" "cd_deployment_group" {  
-    app_name  = "${aws_codedeploy_app.code_deploy_application.name}"  
-    deployment_group_name = "csye6225-webapp-deployment"  
-    service_role_arn = "${aws_iam_role.codedeploy_service.arn}"
-     
-    ec2_tag_filter {      
-        key   = "Name"      
-        type  = "KEY_AND_VALUE"      
-        value = "csye6225-ec2"    
-    }  
+resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
+  app_name              = "${aws_codedeploy_app.cd-webapp.name}"
+  deployment_group_name = "csye6225-webapp-deployment"
+  service_role_arn      = "${aws_iam_role.codedeploy_service.arn}"
 
-    deployment_config_name = "CodeDeployDefault.AllAtOnce"
-    deployment_style {    
-        deployment_type   = "IN_PLACE"  
+  deployment_config_name = "CodeDeployDefault.AllAtOnce"
+  deployment_style {
+    deployment_type   = "IN_PLACE"
+  }
+  ec2_tag_set {
+    ec2_tag_filter {
+      key   = "Name"
+      type  = "KEY_AND_VALUE"
+      value = "csye6225-webapp-deployment"
     }
+  }
+  
+  auto_rollback_configuration {
+    enabled = true
+    events  = ["DEPLOYMENT_FAILURE"]
+  }
 
-    auto_rollback_configuration {    
-      enabled = true    
-      events  = ["DEPLOYMENT_FAILURE"]  
-    }
 }
