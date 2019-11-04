@@ -526,7 +526,7 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
     ec2_tag_filter {
       key   = "Name"
       type  = "KEY_AND_VALUE"
-      value = "csye6225-webapp-deployment"
+      value = "csye6225-ec2"
     }
   }
   
