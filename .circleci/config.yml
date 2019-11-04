@@ -29,25 +29,7 @@ jobs:
             aws configure set default.region us-east-1
             aws configure set aws_access_key_id ${AWS_ACCESS_KEY}
             aws configure set aws_secret_access_key ${AWS_SECRET_KEY}
-      - run:
-          name: Installing node_modules
-          command: |
-            pwd
-            ls -al
-            cd webapp
-            ls -al
-            npm install
-      - run:
-          name: Run Test
-          command: |
-            pwd
-            ls -al
-            cd webapp
-            ls -al
-            node -v
-            npm -v
-            npm start
-            npm test         
+                    
       - run:
           name: Build Artifact
           command: |
