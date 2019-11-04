@@ -32,8 +32,11 @@ jobs:
       - run:
           name: Run Tests
           command: |
+            pwd
+            ls -al
             cd webapp
-            npm run
+            ls -al
+            npm start
             npm test  
       - run:
           name: Build Artifact
