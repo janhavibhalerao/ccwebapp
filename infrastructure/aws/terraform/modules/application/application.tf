@@ -386,16 +386,9 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3_policy" {
         {
             "Effect": "Allow",
             "Action": [
-                        "s3:GetBucketLocation",
-                        "s3:ListAllMyBuckets"
-                      ],
-            "Resource": "arn:aws:s3:::*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "s3:*",
+                "s3:PutObject"
+            ],
             "Resource": [
-                "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}",
                 "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
             ]
         }
