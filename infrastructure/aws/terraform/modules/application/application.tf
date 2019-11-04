@@ -81,24 +81,22 @@ resource "aws_instance" "web" {
         delete_on_termination = true
     }
 
-user_data = <<EOF
+user_data = <<-EOF
 #!/bin/bash
 ####################################################
 # Configure Node ENV_Variables                     #
 ####################################################
-sudo mkdir -p webapp/var/
-cd /webapp/var
-sudo sh -c 'echo NODE_DB_USER=${var.database_username}>.env'
-sudo sh -c 'echo NODE_DB_PASS=${var.AWS_DB_PASSWORD}>>.env'
-sudo sh -c 'echo NODE_DB_HOST=${aws_db_instance.db-instance.address}>>.env'
-sudo sh -c 'echo NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}>>.env'
+sudo sh -c 'echo NODE_DB_USER=${var.database_username}>/var/.env'
+sudo sh -c 'echo NODE_DB_PASS=${var.AWS_DB_PASSWORD}>>/var/.env'
+sudo sh -c 'echo NODE_DB_HOST=${aws_db_instance.db-instance.address}>>/var/.env'
+sudo sh -c 'echo NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}>>/var/.env'
 EOF
 
   tags = {
         Name = "csye6225-ec2"
     }
     vpc_security_group_ids = ["${aws_security_group.application.id}"]
-    depends_on = [aws_db_instance.db-instance]
+    depends_on = [aws_db_instance.db-instance, aws_s3_bucket.s3_bucket]
 }
 
 
