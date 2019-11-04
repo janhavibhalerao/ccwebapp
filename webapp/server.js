@@ -3,7 +3,12 @@ const app = express();
 const bodyParser = require('body-parser');
 const usersRouter = require('./routes/user');
 const recipeRouter = require('./routes/recipe');
-
+const log4js = require('log4js');
+	log4js.configure({
+	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
+	  categories: { default: { appenders: ['logs'], level: 'info' } }
+    });
+const logger = log4js.getLogger('logs');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/v1/user', usersRouter);

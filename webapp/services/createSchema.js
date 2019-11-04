@@ -2,6 +2,12 @@ const mysql = require('mysql');
 require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
 const Config = require('../config/config');
 const conf = new Config();
+const log4js = require('log4js');
+	log4js.configure({
+	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
+	  categories: { default: { appenders: ['logs'], level: 'info' } }
+    });
+const logger = log4js.getLogger('logs');
 
 //mysql database connection
 var con = mysql.createConnection({
@@ -13,10 +19,13 @@ var con = mysql.createConnection({
 });
 
 con.connect(function (err) {
-    if (err) throw err;
+    if (err) {
+        logger.fatal(err);
+        throw err;
+    }
     else {
             console.log("Connected!");
-        
+            logger.info('Connected to database!');
             var sql = `CREATE TABLE IF NOT EXISTS User(
             id varchar(36) NOT NULL,
             first_name varchar(45) NOT NULL,
@@ -29,7 +38,10 @@ con.connect(function (err) {
             UNIQUE KEY email_address_UNIQUE (email_address)
           ) ENGINE=InnoDB DEFAULT CHARSET=latin1;`;
             con.query(sql, function (err, result) {
-                    if (err) throw err;
+                    if (err) {
+                        logger.fatal(err);
+                        throw err;
+                    }
                     else {
                             var sql1 = `CREATE TABLE IF NOT EXISTS Recipe (
                                     
@@ -54,17 +66,23 @@ con.connect(function (err) {
               ) ENGINE=InnoDB DEFAULT CHARSET=latin1;`;
 
                                 con.query(sql1, function (err, result) {
-                                    if (err) throw err;
+                                    if (err) {
+                                        logger.fatal(err);
+                                        throw err;
+                                    }
                                     else {
+                                        logger.info('Recipe Table checked!');
                                         console.log('Recipe Table checked!');
                                         process.exit(0);
                                     }
                                 });
 
                             }
+                            logger.info('User Table checked!');
                             console.log("User Table checked!");
                         });
                     }
+                    logger.info('Database checked!');
                     console.log("Database checked!");
          
     

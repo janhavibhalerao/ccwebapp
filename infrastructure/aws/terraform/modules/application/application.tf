@@ -82,14 +82,35 @@ resource "aws_instance" "web" {
     }
 
 user_data = <<-EOF
+Content-Type: multipart/mixed; boundary="//"
+MIME-Version: 1.0
+
+--//
+Content-Type: text/cloud-config; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="cloud-config.txt"
+
+#cloud-config
+cloud_final_modules:
+- [scripts-user, always]
+
+--//
+Content-Type: text/x-shellscript; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename="userdata.txt"
 #!/bin/bash
 ####################################################
 # Configure Node ENV_Variables                     #
 ####################################################
-sudo sh -c 'echo NODE_DB_USER=${var.database_username}>/var/.env'
-sudo sh -c 'echo NODE_DB_PASS=${var.AWS_DB_PASSWORD}>>/var/.env'
-sudo sh -c 'echo NODE_DB_HOST=${aws_db_instance.db-instance.address}>>/var/.env'
-sudo sh -c 'echo NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}>>/var/.env'
+cd /home/centos
+sudo mkdir -p webapp/var
+cd webapp/var
+echo 'NODE_DB_USER=dbuser'>.env
+echo 'NODE_DB_PASS=Ravi_121992'>>.env
+echo 'NODE_DB_HOST=csye6225-fall2019.csbgk3h1vbb7.us-east-1.rds.amazonaws.com'>>.env
+echo 'NODE_S3_BUCKET=rms.ravi-pilla.me'>>.env
 EOF
 
   tags = {
@@ -97,13 +118,6 @@ EOF
     }
     vpc_security_group_ids = ["${aws_security_group.application.id}"]
     depends_on = [aws_db_instance.db-instance, aws_s3_bucket.s3_bucket]
-}
-
-
-
-resource "aws_kms_key" "mykey" {
-  description = "This key is used to encrypt bucket objects"
-  deletion_window_in_days = 10
 }
 
 resource "aws_s3_bucket" "s3_bucket" {
@@ -114,8 +128,7 @@ resource "aws_s3_bucket" "s3_bucket" {
     server_side_encryption_configuration {
         rule {
             apply_server_side_encryption_by_default {
-            kms_master_key_id = "${aws_kms_key.mykey.arn}"
-            sse_algorithm     = "aws:kms"
+              sse_algorithm     = "AES256"
             }   
         }
     }
@@ -153,8 +166,7 @@ resource "aws_s3_bucket" "cd_s3_bucket" {
     server_side_encryption_configuration {
         rule {
             apply_server_side_encryption_by_default {
-            kms_master_key_id = "${aws_kms_key.mykey.arn}"
-            sse_algorithm     = "aws:kms"
+              sse_algorithm     = "AES256"
             }   
         }
     }
@@ -376,9 +388,9 @@ resource "aws_iam_policy" "CircleCI-Upload-To-S3_policy" {
             "Action": [
                 "s3:PutObject",
             ],
-             "Resource": [
-        "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
-      ]
+            "Resource": [
+                "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
+            ]
         }
     ]
 }

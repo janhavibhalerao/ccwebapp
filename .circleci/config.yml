@@ -69,7 +69,7 @@ jobs:
             ls -al
             cd codedeploy_artifact
             aws configure list
-            aws s3 cp csye6225-web-app-${CIRCLE_BUILD_NUM}.zip s3://${CODE_DEPLOY_S3_BUCKET}
+            aws s3 cp csye6225-web-app-${CIRCLE_BUILD_NUM}.zip s3://${CODE_DEPLOY_S3_BUCKET} --sse
       - run:
           name: Make CodeDeploy API call
           command: |
