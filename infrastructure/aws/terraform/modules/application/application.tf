@@ -376,25 +376,27 @@ resource "aws_iam_role_policy_attachment" "codedeploy_service" {
 }
 
 resource "aws_iam_policy" "CircleCI-Upload-To-S3_policy" {
-  name        = "CircleCI-Upload-To-S3"
-  description = "Policy allows CircleCI to upload artifacts from latest successful build to dedicated S3 bucket used by code deploy."
-
-  policy = <<EOF
+name = "CircleCI-Upload-To-S3"
+description = "Policy allows CircleCI to upload artifacts from latest successful build to dedicated S3 bucket used by code deploy."
+policy = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
         {
             "Effect": "Allow",
             "Action": [
-                "s3:PutObject",
-            ],
-            "Resource": [
-                "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
-            ]
+                "s3:PutObject"
+                ],
+                "Resource": [
+                    "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
+                    ]
+            
         }
-    ]
+        ]
+    
 }
 EOF
+   
 }
 
 resource "aws_iam_user_policy_attachment" "CircleCI-Upload-To-S3-attach" {
