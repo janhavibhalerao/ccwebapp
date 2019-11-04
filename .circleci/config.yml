@@ -36,6 +36,7 @@ jobs:
             ls -al
             cd webapp
             ls -al
+            npm install
             npm start
             npm test  
       - run:
