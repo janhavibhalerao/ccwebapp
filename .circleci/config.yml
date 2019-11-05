@@ -46,9 +46,9 @@ jobs:
             mkdir -p codedeploy_artifact
             pwd
             cd codedeploy_artifact
-            cp -r ../infrastructure .
             cp -r ../webapp .
-            cp -r ../.circleci .
+            cp ../*.sh .
+            cp ../*.json .
             cp ../*.yml .
             cp ../*.md .
             cp ../LICENSE .

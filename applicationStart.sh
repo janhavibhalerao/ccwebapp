@@ -5,14 +5,14 @@ whoami
 cd /home/centos/webapp/webapp
 if [ -d "var" ] 
 then
-    echo "Directory /home/centos/webapp/var exists." 
+    echo "Directory /home/centos/webapp/webapp/var exists." 
 else
     sudo mkdir -p var
 fi
 
 if [ -d "logs" ] 
 then
-    echo "Directory /home/centos/webapp/logs exists." 
+    echo "Directory /home/centos/webapp/webapp/logs exists." 
 else
     sudo mkdir -p logs
     sudo touch logs/webapp.log
