@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:7.10
+      - image: circleci/node:8.1
 
     steps:
       - checkout
@@ -16,11 +16,22 @@ jobs:
           name: Install curl & npm
           command: |
             sudo apt install curl -y
-            sudo apt install npm -y
+            curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+            sudo apt install nodejs -y
+            node --version
+            npm  --version
 
       - run:
-          name: update-npm
-          command: 'sudo npm install -g npm@6'
+          name: install npm modules
+          command: |
+            cd webapp  
+            npm install
+
+      - run:
+          name: test
+          command: |
+            cd webapp
+            npm test    
 
       - run:
           name: Install awscli
@@ -49,7 +60,6 @@ jobs:
             cp -r ../infrastructure .
             cp -r ../.circleci .
             cp -r ../webapp .
-            cp ../*.json .
             cp ../*.yml .
             cp ../*.md .
             cp ../LICENSE .
