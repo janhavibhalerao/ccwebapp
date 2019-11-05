@@ -50,7 +50,6 @@ jobs:
             cp -r ../webapp .
             cp -r ../.circleci .
             cp ../*.yml .
-            cp ../*.sh .
             cp ../*.md .
             cp ../LICENSE .
             cp ../.gitignore .
