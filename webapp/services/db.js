@@ -1,6 +1,6 @@
 const mysql = require('mysql');
 const Config = require('../config/config');
-require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
+require('dotenv').config({ path: '/home/centos/var/.env' });
 const conf = new Config();
 
 //mysql database connection

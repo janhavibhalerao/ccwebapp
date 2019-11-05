@@ -1,7 +1,7 @@
 const aws = require('aws-sdk');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
-require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
+require('dotenv').config({ path: '/home/centos/var/.env' });
 const Config = require('../config/config');
 const conf = new Config();
 const log4js = require('log4js');

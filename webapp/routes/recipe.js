@@ -8,7 +8,7 @@ const checkUser = require('../services/auth');
 const { check, validationResult } = require('express-validator');
 const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image');
 const singleUpload = upload.single('image');
-require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
+require('dotenv').config({ path: '/home/centos/var/.env' });
 const SDC = require('statsd-client'),
 sdc = new SDC({host: 'localhost'});
 const log4js = require('log4js');

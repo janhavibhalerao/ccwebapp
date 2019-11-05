@@ -1,5 +1,5 @@
 const mysql = require('mysql');
-require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
+require('dotenv').config({ path: '/home/centos/var/.env' });
 const Config = require('../config/config');
 const conf = new Config();
 const log4js = require('log4js');
