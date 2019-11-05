@@ -8,7 +8,7 @@ const moment = require('moment');
 const mysql = require('../services/db');
 const saltRounds = 10;
 const checkUser = require('../services/auth');
-require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
+require('dotenv').config({ path: '/home/centos/var/.env' });
 const SDC = require('statsd-client'),
 sdc = new SDC({host: 'localhost'});
 const log4js = require('log4js');
