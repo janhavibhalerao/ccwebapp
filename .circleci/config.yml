@@ -20,7 +20,7 @@ jobs:
 
       - run:
           name: update-npm
-          command: 'sudo npm install -g npm@latest'
+          command: 'sudo npm install -g npm@6'
 
       - run:
           name: Install awscli
@@ -46,6 +46,8 @@ jobs:
             mkdir -p codedeploy_artifact
             pwd
             cd codedeploy_artifact
+            cp -r ../infrastructure .
+            cp -r ../.circleci .
             cp -r ../webapp .
             cp ../*.sh .
             cp ../*.json .

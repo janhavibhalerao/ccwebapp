@@ -82,29 +82,18 @@ resource "aws_instance" "web" {
     }
 
 user_data = <<-EOF
-Content-Type: multipart/mixed; boundary="//"
-MIME-Version: 1.0
-
---//
-Content-Type: text/cloud-config; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="cloud-config.txt"
-
-#cloud-config
-cloud_final_modules:
-- [scripts-user, always]
-
---//
-Content-Type: text/x-shellscript; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="userdata.txt"
 #!/bin/bash
 ####################################################
 # Configure Node ENV_Variables                     #
 ####################################################
+sudo yum update -y
+sudo yum install ruby -y
+sudo yum install wget -y
 cd /home/centos
+wget https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install
+chmod +x ./install
+sudo ./install auto
+sudo service codedeploy-agent start
 sudo mkdir -p webapp/var
 cd webapp/var
 echo 'NODE_DB_USER=${var.database_username}'>.env
