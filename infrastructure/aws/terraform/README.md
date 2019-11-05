@@ -17,7 +17,7 @@ Before you develop the infrastructure, make sure to setup
 6. Alternatively you can use the file test.tfvars to pass parameters to steps 4 and 5 using                 terraform apply -var-file "relative/path/to/file" or terraform destroy -var-file "relative/   path/to/   file"
 7. To create another vpc, with same configuration, navigate to env2 and follow the above steps
 
-#Required Parameters to create Infrastructure
+#Required Parameters to create the Infrastructure
 aws_region
 vpc_name
 vpc_cidr
