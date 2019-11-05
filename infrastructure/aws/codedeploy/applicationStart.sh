@@ -1,5 +1,4 @@
 #!/bin/bash
-
 pwd
 whoami
 cd /home/centos/webapp
