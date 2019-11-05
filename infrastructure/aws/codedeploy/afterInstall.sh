@@ -11,6 +11,7 @@ pwd
 cd /home/centos/var
 #sudo cp /var/.env /home/centos/webapp/var
 sudo chmod 777 .env
+cd /home/centos/webapp
 sudo npm install
 nohup node server.js >> app.log 2>&1 &
 
