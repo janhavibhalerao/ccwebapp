@@ -16,7 +16,7 @@ whoami
 aws configure set default.region us-east-1
 aws configure list
 
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/home/centos/infrastructure/aws/codedeploy/cloudwatch-config.json -s
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/home/centos/webapp/infrastructure/aws/codedeploy/cloudwatch-config.json -s
 
 cd /home/centos/webapp/webapp
 pwd
