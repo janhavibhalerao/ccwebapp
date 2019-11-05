@@ -22,5 +22,5 @@ fi
 sudo cp /var/.env /home/centos/webapp/var
 sudo chmod 777 .env
 pwd
-sudo pm2 kill
+#pm2 kill
 sudo pm2 -f start server.js
