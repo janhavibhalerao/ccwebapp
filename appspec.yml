@@ -13,3 +13,7 @@ ApplicationStart:
 - location: ./infrastructure/aws/codedeploy/applicationStart.sh
   timeout: 3600
   runas: centos
+ ApplicationStop:
+- location: ./infrastructure/aws/codedeploy/applicationStop.sh
+  timeout: 3600
+  runas: centos 

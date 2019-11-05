@@ -10,6 +10,7 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-c
 pwd
 cd /home/centos/webapp
 sudo npm install
-sudo npm install pm2 -g
+nohup node server.js >> app.log 2>&1 &
+
 #pm2 update
 #pm2 start server.js
