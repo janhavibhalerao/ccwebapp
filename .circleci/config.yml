@@ -49,7 +49,6 @@ jobs:
             cp -r ../infrastructure .
             cp -r ../.circleci .
             cp -r ../webapp .
-            cp ../*.sh .
             cp ../*.json .
             cp ../*.yml .
             cp ../*.md .
