@@ -1,4 +1,5 @@
 #!/bin/bash
+source /home/centos/.bash_profile
 pwd
 whoami
 cd /home/centos/webapp

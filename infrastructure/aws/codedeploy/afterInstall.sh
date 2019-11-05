@@ -1,4 +1,5 @@
 #!/bin/bash
+source /home/centos/.bash_profile
 pwd
 whoami
 aws configure set default.region us-east-1

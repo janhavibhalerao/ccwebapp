@@ -86,14 +86,14 @@ user_data = <<-EOF
 ####################################################
 # Configure Node ENV_Variables                     #
 ####################################################
-sudo yum update -y
-sudo yum install ruby -y
-sudo yum install wget -y
+source /home/centos/.bash_profile
 cd /home/centos
-echo 'NODE_DB_USER=${var.database_username}'>/var/.env
-echo 'NODE_DB_PASS=${var.AWS_DB_PASSWORD}'>>/var/.env
-echo 'NODE_DB_HOST=${aws_db_instance.db-instance.address}'>>/var/.env
-echo 'NODE_S3_BUCKET=${var.AWS_CD_S3_BUCKET_NAME}'>>/var/.env
+mkdir var
+cd var
+echo 'NODE_DB_USER=${var.database_username}'>.env
+echo 'NODE_DB_PASS=${var.AWS_DB_PASSWORD}'>>.env
+echo 'NODE_DB_HOST=${aws_db_instance.db-instance.address}'>>.env
+echo 'NODE_S3_BUCKET=${var.AWS_CD_S3_BUCKET_NAME}'>>.env
 EOF
 
   tags = {
