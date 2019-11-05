@@ -20,12 +20,12 @@ jobs:
 
       - run:
           name: update-npm
-          command: 'sudo npm install -g npm@6'
+          command: 'sudo npm install -g npm@6.4.1'
 
       - run:
           name: clean cache
           command: npm cache clean  
-          
+
       - run:
           name: install npm modules
           command: npm install
