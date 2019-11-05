@@ -38,5 +38,5 @@
 Run npm start to start node server & npm test for running test case
 
 ## CI/CD
-Using CircleCI & CodeDeploy
+Using CircleCI & AWS CodeDeploy
 
