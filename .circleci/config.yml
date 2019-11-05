@@ -36,7 +36,7 @@ jobs:
           name: node module clean up
           command: |
             cd webapp
-            rm -r node_modules  
+            sudo rm -r node_modules  
 
       - run:
           name: Install awscli
