@@ -3,6 +3,10 @@ provider "aws" {
   version = "~> 2.31"
 }
 
+module "circleci" {
+  source = "../modules/circle-ci-policy"
+}
+
 module "networking" {
     source = "../modules/networking"
     vpc_cidr = "${var.vpc_cidr}"
