@@ -20,14 +20,18 @@ jobs:
             sudo apt install nodejs -y
             node --version
             npm  --version
-            
+
       - run:
           name: install npm modules
-          command: npm install
+          command: |
+            cd webapp  
+            npm install
 
       - run:
           name: test
-          command: npm test    
+          command: |
+            cd webapp
+            npm test    
 
       - run:
           name: Install awscli
