@@ -23,8 +23,8 @@ jobs:
           command: 'sudo npm install -g npm@latest'
 
       - run:
-          name: clean cache
-          command: npm cache clean  
+          name: strip-ansi dependency
+          command: npm install strip-ansi --save  
 
       - run:
           name: install npm modules
