@@ -22,6 +22,7 @@ cd /home/centos/webapp/
 sudo chown -R centos:centos /home/centos/webapp
 nohup node server.js > /dev/null 2>&1 &
 pwd
+npm install -g pm2
+pm2 update
 npm install
-npm install pm2 -g
 #pm2 start server.js
