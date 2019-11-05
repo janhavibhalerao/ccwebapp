@@ -13,6 +13,7 @@ cd /home/centos/var
 sudo chmod 777 .env
 cd /home/centos/webapp
 sudo npm install
+sudo npm run schema
 nohup node server.js >> app.log 2>&1 &
 
 #pm2 update
