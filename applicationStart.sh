@@ -10,5 +10,3 @@ else
     sudo touch logs/webapp.log
     sudo chmod 666 logs/webapp.log
 fi
-#pm2 kill
-#sudo pm2 -f start server.js
