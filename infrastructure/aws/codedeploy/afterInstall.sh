@@ -9,7 +9,7 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-c
 #nohup node server.js > /dev/null 2>&1 &
 pwd
 cd /home/centos/var
-#sudo cp /var/.env /home/centos/webapp/var
+sudo cp /var/.env /home/centos/webapp/var
 sudo chmod 777 .env
 cd /home/centos/webapp
 sudo npm install
