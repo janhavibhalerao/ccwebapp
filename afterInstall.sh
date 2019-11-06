@@ -11,8 +11,10 @@ pwd
 cd /home/centos/var
 sudo chmod 777 .env
 cd ..
-cd webapp
-sudo npm install
+pwd
+sudo chown -R centos:centos /home/centos/webapp
+cd /home/centos/webapp
+npm install
 nohup npm start >> app.log 2>&1 &
 
 #pm2 update
