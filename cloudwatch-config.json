@@ -9,7 +9,7 @@
                   "collect_list": [
                       {
                           "file_path": "/home/centos/webapp/logs/webapp.log",
-                          "log_group_name": "csye_su6225",
+                          "log_group_name": "csye6225_su6225",
                           "log_stream_name": "webapp"
                       }
                   ]

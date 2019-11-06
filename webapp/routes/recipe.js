@@ -22,6 +22,7 @@ const logger = log4js.getLogger('logs');
 // Protected route: Update Recipe
 router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) => {
     sdc.increment('Put Recipe Triggered');
+    
     if (res.locals.user) {
         if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
             || req.body.id != null || req.body.total_time_in_min != null) {
