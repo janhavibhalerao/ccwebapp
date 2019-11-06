@@ -22,14 +22,14 @@ const logger = log4js.getLogger('logs');
 // Protected route: Update Recipe
 router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) => {
     sdc.increment('Put Recipe Triggered');
-    
+    let timer = new Date();
     if (res.locals.user) {
         if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
             || req.body.id != null || req.body.total_time_in_min != null) {
             logger.error('Invalid Request body');    
             return res.status(400).json({ msg: 'Invalid Request body' });
         } else {
-
+            let dbtimer = new Date();
             mysql.query('select * from Recipe where id=(?)', [req.params.id], (err, result) => {
                 if (result[0] != null) {
                     if (result[0].author_id === res.locals.user.id) {
@@ -107,7 +107,8 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                                     nutrition_information: req.body.nutrition_information
                                                 });
                                             }
-                                        })
+                                        });
+                                        sdc.timing('put.recipedb.time', dbtimer);
                                 }
                                 else {
                                     logger.error('Invalid Recipe Steps');
@@ -136,11 +137,13 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
         logger.error('UnAuthorized Access');
         res.status(401).json({ msg: 'Unauthorized' });
     }
+    sdc.timing('put.recipe.time', timer);
 });
 
 //Protected Route: Create Recipe
 router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, next) => {
     sdc.increment('POST Recipe Triggered');
+    let timer = new Date();
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
         let errors = validationResult(req);
@@ -167,6 +170,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                 let totalTimeForPrep = prepTime + cookTime;
                 let id = uuid();
                 let timeStamp = moment().format('YYYY-MM-DD HH:mm:ss');
+                let dbtimer = new Date();
                 mysql.query('insert into Recipe(`id`,`created_ts`,`updated_ts`,`author_id`,`cook_time_in_min`,`prep_time_in_min`, `total_time_in_min`,`title`,`cusine`, `servings`,`ingredients`,`steps`,`nutrition_information`)values(?,?,?,?,?,?,?,?,?,?,?,?,?)'
                     , [id, timeStamp, timeStamp,
                         res.locals.user.id,
@@ -203,6 +207,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                             });
                         }
                     });
+                    sdc.timing('post.recipedb.time', dbtimer);
             } else {
                 logger.error('Invalid steps for Recipe');
                 return res.status(400).json({ msg: 'Invalid steps for Recipe' });
@@ -212,13 +217,16 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
         logger.error('Request type must be JSON');
         return res.status(400).json({ msg: 'Request type must be JSON!' });
     }
+    sdc.timing('post.recipe.time', timer);
 });
 
 // Get Recipe
 router.get('/:id', (req, res) => {
     sdc.increment('GET Recipe Triggered');
+    let timer = new Date();
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
+        let dbtimer = new Date();
         mysql.query(`select 
         image,
         id,
@@ -255,17 +263,21 @@ router.get('/:id', (req, res) => {
             }
 
         });
+        sdc.timing('get.recipedb.time', dbtimer);
     } else {
         logger.error('Request type must be JSON');
         return res.status(400).json({ msg: 'Request type must be JSON!' });
     }
+    sdc.timing('get.recipe.time', timer);
 });
 
 
 //Protected Route: Delete Recipe
 router.delete('/:id', checkUser.authenticate, (req, res) => {
     sdc.increment('DELETE Recipe Triggered');
+    let timer = new Date();
     if (res.locals.user) {
+        let dbtimer = new Date();
         mysql.query('select * from Recipe where id=(?)', [req.params.id], (err, result) => {
             if (result[0] != null) {
                 if (result[0].author_id === res.locals.user.id) {
@@ -273,7 +285,9 @@ router.delete('/:id', checkUser.authenticate, (req, res) => {
                         result[0].image = JSON.parse(result[0].image);
                         let s3Id = result[0].image.url.split('/');
                         let imageId = s3Id[s3Id.length - 1];
+                        let s3timer = new Date();
                         deleteFromS3(imageId, function (resp) {
+                            sdc.timing('deletefromS3.recipeImage.time', s3timer);
                             if (resp != null) {
                                 mysql.query('delete from Recipe where id=(?)', [req.params.id], (err, result) => {
                                     if (err) {
@@ -284,6 +298,7 @@ router.delete('/:id', checkUser.authenticate, (req, res) => {
                                         return res.status(204).json();
                                     }
                                 });
+                                sdc.timing('delete.recipedb.time', dbtimer);
                             }
                         });
                     } else {
@@ -296,6 +311,7 @@ router.delete('/:id', checkUser.authenticate, (req, res) => {
                                 return res.status(204).json();
                             }
                         });
+                        sdc.timing('delete.recipedb.time', dbtimer);
                     }
                 } else {
                     logger.error('UnAuthorized');
@@ -310,18 +326,21 @@ router.delete('/:id', checkUser.authenticate, (req, res) => {
         logger.error('UnAuthorized');
         return res.status(401).json({ msg: 'Unauthorized' });
     }
+    sdc.timing('delete.recipe.time', timer);
 });
 
 //Protected Route: Attach image to recipe
 router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
     sdc.increment('POST Image for Recipe Triggered');
+    let timer = new Date();
+    let dbtimer = new Date();
     mysql.query('select * from Recipe where id=(?)', [req.params.id], (err, result) => {
         if (result[0] != null) {
             if (result[0].author_id === res.locals.user.id) {
                 if (result[0].image != null) {
                     return res.status(400).json({ msg: 'Please delete the previous image before re-uploading' });
                 } else {
-
+                    let s3timer = new Date();
                     singleUpload(req, res, (err) => {
                         if (err) {
                             logger.error(err);
@@ -336,6 +355,7 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
                                     'url': req.file.location
                                 };
                                 getMetaDataFromS3(function (metadata) {
+                                    sdc.timing('uploadToS3.recipeImage.time', s3timer);
                                     if (metadata != null) {
                                         mysql.query(`UPDATE Recipe SET image=(?), metadata=(?) where id=(?)`, [JSON.stringify(image), JSON.stringify(metadata), req.params.id], (err, result) => {
                                             if (!err) {
@@ -345,6 +365,7 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
                                                 return res.status(500).json({ msg: 'Some error while storing image data to DB' });
                                             }
                                         });
+                                        sdc.timing('post.recipeImagedb.time', dbtimer);
                                     } else {
                                         logger.fatal('Issue in getting metadata');
                                         return res.status(500).json({ msg: 'Issue in getting metadata' });
@@ -366,13 +387,15 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
             return res.status(404).json({ msg: 'Recipe Not Found' });
         }
     });
-
+    sdc.timing('post.recipeImage.time', timer);
 });
 
 //Get recipe image
 router.get('/:recipeId/image/:imageId', (req, res) => {
     sdc.increment('GET Recipe Image Triggered');
+    let timer = new Date();
     mysql.query('select image from Recipe where id=(?)', [req.params.recipeId], (err, data) => {
+        sdc.timing('get.recipeImagedb.time', timer);
         if (data[0] != null) {
             if (data[0].image != null) {
                 data[0].image = JSON.parse(data[0].image);
@@ -391,11 +414,13 @@ router.get('/:recipeId/image/:imageId', (req, res) => {
             return res.status(404).json({ msg: 'Recipe Not Found!' });
         }
     });
+    sdc.timing('get.recipeImage.time', timer);
 });
 
 //Protected Route:Delete recipe image
 router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) => {
     sdc.increment('DELETE Recipe Image Triggered');
+    let timer = new Date();
     if (res.locals.user) {
         mysql.query('select image from Recipe where id=(?)', [req.params.recipeId], (err, data) => {
 
@@ -407,8 +432,9 @@ router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) =>
                     if (req.params.imageId === data[0].image.id) {
                         let s3Id = data[0].image.url.split('/');
                         let imageId = s3Id[s3Id.length - 1];
-
+                        let s3timer = new Date();
                         deleteFromS3(imageId, function (resp) {
+                            sdc.timing('deletefromS3.recipeImage.time', s3timer);
                             if (resp != null) {
                                 mysql.query(`UPDATE Recipe SET image=(?), metadata=(?) where id=(?)`, [null, null, req.params.recipeId], (err, result) => {
                                     if (err) {
@@ -419,6 +445,7 @@ router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) =>
                                         return res.status(204).json();
                                     }
                                 });
+                                sdc.timing('Delete.recipeImagedb.time', timer);
                             } else {
                                 logger.error('Some error in deleting image. Please check permissions');
                                 return res.status(400).json({ msg: 'Some error in deleting image. Please check permissions' });
@@ -444,11 +471,13 @@ router.delete('/:recipeId/image/:imageId', checkUser.authenticate, (req, res) =>
         logger.error('User Unauthorized');
         return res.status(401).json({ msg: 'User unauthorized!' });
     }
+    sdc.timing('Delete.recipeImage.time', timer);
 });
 
 //Get newest recipe
 router.get('/', (req, res) => {
     sdc.increment('GET Newest Recipe Triggered');
+    let timer = new Date();
     let contentType = req.headers['content-type'];
     if (contentType == 'application/json') {
         mysql.query(`select 
@@ -467,6 +496,7 @@ router.get('/', (req, res) => {
         steps,
         nutrition_information
         from Recipe where created_ts IN(SELECT MAX(created_ts) FROM Recipe)`, (err, data) => {
+            sdc.timing('get.NewestRecipedb.time', timer);
             if (err) {
                 logger.error(err);
                 return res.status(400).json({ msg: 'Fetching newest recipe failed!' });
@@ -492,6 +522,7 @@ router.get('/', (req, res) => {
         logger.error('Request type must be JSON');
         return res.status(400).json({ msg: 'Request type must be JSON!' });
     }
+    sdc.timing('Get.NewestRecipe.time', timer);
 });
 
 module.exports = router;    

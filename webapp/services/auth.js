@@ -22,6 +22,7 @@ exports.authenticate = (req, res, next) => {
     const auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
     const username = auth[0];
     const password = auth[1];
+    let dbtimer = new Date();
     mysql.query('select * from User where email_address = (?)', [username], (err, data) => {
         if (data[0] != null) {
             bcrypt.compare(password, data[0].password, (err, result) => {
@@ -40,6 +41,8 @@ exports.authenticate = (req, res, next) => {
             logger.error('UnAuthorized');
             return res.status(401).json({ msg: 'Unauthorized' });
         }
-    })
+    });
+    sdc.timing('get.userdb.time', dbtimer);
+
 }
 
