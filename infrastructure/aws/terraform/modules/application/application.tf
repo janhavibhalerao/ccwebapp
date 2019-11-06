@@ -83,8 +83,6 @@ user_data = <<-EOF
 ####################################################
 cd /home/centos
 mkdir var
-mkdir webapp
-chmod 777 webapp
 cd var
 echo 'NODE_DB_USER=${var.database_username}'>.env
 echo 'NODE_DB_PASS=${var.AWS_DB_PASSWORD}'>>.env
