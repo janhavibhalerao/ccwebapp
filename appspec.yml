@@ -6,14 +6,14 @@ files:
   destination: /home/centos
 hooks:
 AfterInstall:
-- location: /home/centos/infrastructure/aws/codedeploy/afterInstall.sh
+- location: /home/centos/afterInstall.sh
   timeout: 180
   runas: centos
 ApplicationStart:
-- location: ./infrastructure/aws/codedeploy/applicationStart.sh
+- location: /home/centos/applicationStart.sh
   timeout: 3600
   runas: centos
 ApplicationStop:
-- location: ./infrastructure/aws/codedeploy/applicationStop.sh
+- location: /home/centos/applicationStop.sh
   timeout: 3600
   runas: centos
