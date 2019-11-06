@@ -1,34 +1,18 @@
 version: 0.0
 os: linux
-
 files:
- - source: ./
-   destination: /home/centos/
-
-permissions:
- - object: /home/centos/webapp
-   owner: centos
-   group: centos
-   mode: 700
-   type:
-    - file
- - object: /home/centos/webapp
-   owner: centos
-   group: centos
-   mode: 700
-   type:
-    - directory
-
+  - source: ./
+    destination: /home/centos/
 hooks:
-AfterInstall:
-- location: ./afterInstall.sh
-  timeout: 180
-  runas: centos
-ApplicationStart:
-- location: ./applicationStart.sh
-  timeout: 3600
-  runas: centos
-ApplicationStop:
-- location: ./applicationStop.sh
-  timeout: 3600
-  runas: centos
+  AfterInstall:
+    - location: ./afterInstall.sh
+      timeout: 180
+      runas: root
+  ApplicationStart:
+    - location: ./applicationStart.sh
+      timeout: 3600
+      runas: centos
+  ApplicationStop:
+    - location: ./applicationStop.sh
+      timeout: 3600
+      runas: centos
