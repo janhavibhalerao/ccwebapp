@@ -2,8 +2,8 @@ version: 0.0
 os: linux
 
 files:
- - source: /
-   destination: /home/centos
+ - source: ./webapp
+   destination: /home/centos/
 
 permissions:
  - object: /home/centos/webapp
