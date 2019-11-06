@@ -10,7 +10,7 @@ const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image')
 const singleUpload = upload.single('image');
 require('dotenv').config({ path: '/home/centos/var/.env' });
 const SDC = require('statsd-client'),
-sdc = new SDC({host: 'localhost'});
+sdc = new SDC({host: 'localhost' , port:8125});
 const log4js = require('log4js');
 	log4js.configure({
 	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
