@@ -63,6 +63,7 @@ jobs:
             cd codedeploy_artifact
             cp -r ../webapp .
             cp ../*.yml .
+            cp ../*.sh .
             cp ../*.json .
             cp ../*.md .
             cp ../LICENSE .
