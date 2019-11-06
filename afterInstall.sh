@@ -6,6 +6,7 @@ aws configure list
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/home/centos/cloudwatch-config.json -s
 pwd
 cd /home/centos
+echo "check3" > .test
 sudo chmod 777 webapp
 cd /webapp
 echo "check1" > .test
