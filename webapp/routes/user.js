@@ -75,7 +75,7 @@ router.put('/self', checkUser.authenticate, (req, res) => {
 
 // To get the user information
 router.get('/self', checkUser.authenticate, (req, res) => {
-     sdc.increment('GET User Triggered');
+     sdc.increment('GET User Triggered', 20);
      let timer = new Date();
      if (res.locals.user) {
           res.statusCode = 200;
@@ -90,7 +90,9 @@ router.get('/self', checkUser.authenticate, (req, res) => {
 
 
 router.post('/', (req, res, next) => {
-     sdc.increment('POST User Triggered');
+     
+     //sdc.increment('POST User Triggered');
+     sdc.counter('POST User Triggered counter');
      let timer = new Date();
      let contentType = req.headers['content-type'];
      if (contentType == 'application/json') {
