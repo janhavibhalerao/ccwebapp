@@ -26,13 +26,13 @@ jobs:
           command: |
             cd webapp  
             npm install
-
+      
       - run:
           name: test
           command: |
             cd webapp
-            npm test    
-
+            npm test  
+      
       - run:
           name: Install awscli
           command: |
@@ -45,10 +45,14 @@ jobs:
           name: Build Artifact
           command: |
             cd webapp
-            pwd
-            ls -al
-            cd ..
-            pwd
+            npm build
+
+      - run:
+          name: clean node_modules
+          command: |
+            cd webapp
+            sudo rm -r node_modules
+            
       - run:
           name: Zip Artifact
           command: |
@@ -57,10 +61,10 @@ jobs:
             mkdir -p codedeploy_artifact
             pwd
             cd codedeploy_artifact
-            cp -r ../infrastructure .
-            cp -r ../.circleci .
             cp -r ../webapp .
             cp ../*.yml .
+            cp ../*.sh .
+            cp ../*.json .
             cp ../*.md .
             cp ../LICENSE .
             cp ../.gitignore .

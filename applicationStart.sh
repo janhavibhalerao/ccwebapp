@@ -2,13 +2,6 @@
 pwd
 whoami
 cd /home/centos/webapp
-if [ -d "var" ] 
-then
-    echo "Directory /home/centos/webapp/var exists." 
-else
-    sudo mkdir -p var
-fi
-
 if [ -d "logs" ] 
 then
     echo "Directory /home/centos/webapp/logs exists." 
@@ -17,5 +10,3 @@ else
     sudo touch logs/webapp.log
     sudo chmod 666 logs/webapp.log
 fi
-#pm2 kill
-#sudo pm2 -f start server.js

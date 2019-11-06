@@ -76,6 +76,7 @@ router.put('/self', checkUser.authenticate, (req, res) => {
 // To get the user information
 router.get('/self', checkUser.authenticate, (req, res) => {
      sdc.increment('GET User Triggered');
+     let timer = new Date();
      if (res.locals.user) {
           res.statusCode = 200;
           res.locals.user.account_created = res.locals.user.account_created;
@@ -83,12 +84,14 @@ router.get('/self', checkUser.authenticate, (req, res) => {
           res.setHeader('Content-Type', 'application/json');
           res.json(res.locals.user);
      }
+     sdc.timing('get.user.time', timer); 
 });
 
 
 
 router.post('/', (req, res, next) => {
      sdc.increment('POST User Triggered');
+     let timer = new Date();
      let contentType = req.headers['content-type'];
      if (contentType == 'application/json') {
           let first_name = req.body.first_name;
@@ -142,6 +145,7 @@ router.post('/', (req, res, next) => {
           logger.error('Request type must be JSON!');
           return res.status(400).json({ msg: 'Request type must be JSON!' });
      }
+     sdc.timing('post.user.time', timer); 
 });
 
 module.exports = router;

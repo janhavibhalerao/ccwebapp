@@ -11,7 +11,7 @@ log4js.configure({
 });
 const logger = log4js.getLogger('logs');
 
-console.log("---- process env -----", process.env);
+//console.log("---- process env -----", process.env);
 
 //global common variables
 var imageDir = conf.image.imageBucket;

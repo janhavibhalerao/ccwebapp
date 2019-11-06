@@ -9,7 +9,11 @@
                   "collect_list": [
                       {
                           "file_path": "/home/centos/webapp/logs/webapp.log",
+<<<<<<< HEAD:infrastructure/aws/codedeploy/cloudwatch-config.json
                           "log_group_name": "csye_su6225",
+=======
+                          "log_group_name": "csye6225_su6225",
+>>>>>>> c2ad954c5d397e6987baeb38e9731062e3ab4a3f:cloudwatch-config.json
                           "log_stream_name": "webapp"
                       }
                   ]
