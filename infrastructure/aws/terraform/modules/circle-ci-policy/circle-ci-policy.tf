@@ -50,5 +50,5 @@ EOF
 
 resource "aws_iam_user_policy_attachment" "circleci-ec2-ami-attach" {
   user       = "${var.CircleCIUser}"
-  policy_arn = "${aws_iam_policy.circleci-ec2-ami_policy.arn}"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
 }
