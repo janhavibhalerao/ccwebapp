@@ -63,16 +63,11 @@ resource "aws_security_group" "database" {
     }
 }
 
-resource "aws_key_pair" "terraform_ec2_key" {
-  key_name = "terraform_ec2_key"
-  public_key = "${var.ec2Key}"
-}
-
 resource "aws_instance" "web" {
     ami       = "${var.AMI_ID}"
     subnet_id = "${var.ec2subnet}"
     instance_type = "t2.micro"
-    key_name = "terraform_ec2_key"
+    key_name = "${var.ec2Key}"
     iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
     ebs_block_device {
         device_name = "/dev/sdg"
@@ -82,35 +77,18 @@ resource "aws_instance" "web" {
     }
 
 user_data = <<-EOF
-Content-Type: multipart/mixed; boundary="//"
-MIME-Version: 1.0
-
---//
-Content-Type: text/cloud-config; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="cloud-config.txt"
-
-#cloud-config
-cloud_final_modules:
-- [scripts-user, always]
-
---//
-Content-Type: text/x-shellscript; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment; filename="userdata.txt"
 #!/bin/bash
 ####################################################
 # Configure Node ENV_Variables                     #
 ####################################################
 cd /home/centos
-sudo mkdir -p webapp/var
-cd webapp/var
-echo 'NODE_DB_USER=dbuser'>.env
-echo 'NODE_DB_PASS=Ravi_121992'>>.env
-echo 'NODE_DB_HOST=csye6225-fall2019.csbgk3h1vbb7.us-east-1.rds.amazonaws.com'>>.env
-echo 'NODE_S3_BUCKET=rms.ravi-pilla.me'>>.env
+mkdir var
+cd var
+echo 'NODE_DB_USER=${var.database_username}'>.env
+echo 'NODE_DB_PASS=${var.AWS_DB_PASSWORD}'>>.env
+echo 'NODE_DB_HOST=${aws_db_instance.db-instance.address}'>>.env
+echo 'NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}'>>.env
+chmod 777 .env
 EOF
 
   tags = {
@@ -328,8 +306,6 @@ resource "aws_iam_role_policy_attachment" "ec2-rds-acccess" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
 }
 
-
-
 // Cloud Watch Agent Policy
 resource "aws_iam_role_policy_attachment" "ec2-cloudwatch-attach" {
   role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
@@ -453,61 +429,6 @@ resource "aws_iam_user_policy_attachment" "CircleCI-Code-Deploy-attach" {
   policy_arn = "${aws_iam_policy.CircleCI-Code-Deploy_policy.arn}"
 }
 
-resource "aws_iam_policy" "circleci-ec2-ami_policy" {
-  name        = "circleci-ec2-ami"
-  description = "Policy which allows circleci user to access ec2"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-      "Effect": "Allow",
-      "Action" : [
-        "ec2:AttachVolume",
-        "ec2:AuthorizeSecurityGroupIngress",
-        "ec2:CopyImage",
-        "ec2:CreateImage",
-        "ec2:CreateKeypair",
-        "ec2:CreateSecurityGroup",
-        "ec2:CreateSnapshot",
-        "ec2:CreateTags",
-        "ec2:CreateVolume",
-        "ec2:DeleteKeyPair",
-        "ec2:DeleteSecurityGroup",
-        "ec2:DeleteSnapshot",
-        "ec2:DeleteVolume",
-        "ec2:DeregisterImage",
-        "ec2:DescribeImageAttribute",
-        "ec2:DescribeImages",
-        "ec2:DescribeInstances",
-        "ec2:DescribeInstanceStatus",
-        "ec2:DescribeRegions",
-        "ec2:DescribeSecurityGroups",
-        "ec2:DescribeSnapshots",
-        "ec2:DescribeSubnets",
-        "ec2:DescribeTags",
-        "ec2:DescribeVolumes",
-        "ec2:DetachVolume",
-        "ec2:GetPasswordData",
-        "ec2:ModifyImageAttribute",
-        "ec2:ModifyInstanceAttribute",
-        "ec2:ModifySnapshotAttribute",
-        "ec2:RegisterImage",
-        "ec2:RunInstances",
-        "ec2:StopInstances",
-        "ec2:TerminateInstances"
-      ],
-      "Resource" : "*"
-  }]
-}
-EOF
-}
-
-resource "aws_iam_user_policy_attachment" "circleci-ec2-ami-attach" {
-  user       = "${var.CircleCIUser}"
-  policy_arn = "${aws_iam_policy.circleci-ec2-ami_policy.arn}"
-}
-
 resource "aws_codedeploy_app" "cd-webapp" {
   name             = "csye6225-webapp"
 }
@@ -526,7 +447,7 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
     ec2_tag_filter {
       key   = "Name"
       type  = "KEY_AND_VALUE"
-      value = "csye6225-webapp-deployment"
+      value = "csye6225-ec2"
     }
   }
   

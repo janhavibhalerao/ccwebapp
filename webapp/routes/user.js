@@ -8,9 +8,9 @@ const moment = require('moment');
 const mysql = require('../services/db');
 const saltRounds = 10;
 const checkUser = require('../services/auth');
-require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
+require('dotenv').config({ path: '/home/centos/var/.env' });
 const SDC = require('statsd-client'),
-sdc = new SDC({host: 'localhost'});
+sdc = new SDC({host: 'localhost' , port:8125});
 const log4js = require('log4js');
 	log4js.configure({
 	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
@@ -24,6 +24,7 @@ const logger = log4js.getLogger('logs');
 // To update the user information
 router.put('/self', checkUser.authenticate, (req, res) => {
      sdc.increment('PUT User Triggered');
+     let timer = new Date();
      if (res.locals.user) {
           if (Object.keys(req.body).length > 0) {
                let contentType = req.headers['content-type'];
@@ -49,6 +50,7 @@ router.put('/self', checkUser.authenticate, (req, res) => {
                          let update_set = Object.keys(req.body).map(value => {
                               return ` ${value}  = "${req.body[value]}"`;
                          });
+                         let dbtimer = new Date();
                          mysql.query(`UPDATE User SET ${update_set.join(" ,")}, account_updated=(?) WHERE email_address = (?)`, [moment().format('YYYY-MM-DD HH:mm:ss'), res.locals.user.email_address], function (error, results) {
                               if (error) {
                                    logger.error(error);
@@ -58,6 +60,7 @@ router.put('/self', checkUser.authenticate, (req, res) => {
                                    return res.status(204).json();
                               }
                          });
+                         sdc.timing('put.userdb.time', dbtimer); 
                     }
                } else {
                     logger.error('Request type must be JSON!');
@@ -71,11 +74,13 @@ router.put('/self', checkUser.authenticate, (req, res) => {
           logger.error('UnAuthorized Access');
           return res.status(401).json({ msg: 'Unauthorized' });
      }
+     sdc.timing('put.user.time', timer);
 });
 
 // To get the user information
 router.get('/self', checkUser.authenticate, (req, res) => {
      sdc.increment('GET User Triggered');
+     let timer = new Date();
      if (res.locals.user) {
           res.statusCode = 200;
           res.locals.user.account_created = res.locals.user.account_created;
@@ -83,12 +88,14 @@ router.get('/self', checkUser.authenticate, (req, res) => {
           res.setHeader('Content-Type', 'application/json');
           res.json(res.locals.user);
      }
+     sdc.timing('get.user.time', timer); 
 });
 
 
 
 router.post('/', (req, res, next) => {
      sdc.increment('POST User Triggered');
+     let timer = new Date();
      let contentType = req.headers['content-type'];
      if (contentType == 'application/json') {
           let first_name = req.body.first_name;
@@ -103,7 +110,7 @@ router.post('/', (req, res, next) => {
                const id = uuid();
                const account_created = moment().format('YYYY-MM-DD HH:mm:ss');
                const account_updated = moment().format('YYYY-MM-DD HH:mm:ss');
-
+               let dbtimer = new Date();
                mysql.query('insert into User(`id`,`first_name`,`last_name`,`password`,`email_address`,`account_created`,`account_updated`)values(?,?,?,?,?,?,?)',
                     [id, first_name, last_name, hashedPassword, email_address, account_created, account_updated], (err, result) => {
                          if (err) {
@@ -122,6 +129,7 @@ router.post('/', (req, res, next) => {
                               });
                          }
                     });
+                    sdc.timing('post.userdb.time', dbtimer);
           }
           else if (first_name == null || last_name == null || password == null || email_address == null) {
                logger.error('Please enter all required details');
@@ -142,6 +150,7 @@ router.post('/', (req, res, next) => {
           logger.error('Request type must be JSON!');
           return res.status(400).json({ msg: 'Request type must be JSON!' });
      }
+     sdc.timing('post.user.time', timer); 
 });
 
 module.exports = router;

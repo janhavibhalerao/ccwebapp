@@ -1,16 +1,18 @@
 version: 0.0
 os: linux
-
-files:             
-   - source: /
-     destination: /home/centos
-
- hooks:
-   AfterInstall:
-    - location: ./infrastructure/aws/codedeploy/afterInstall.sh
+files:
+  - source: ./
+    destination: /home/centos/
+hooks:
+  AfterInstall:
+    - location: ./afterInstall.sh
       timeout: 180
       runas: root
-   ApplicationStart:
-    - location: ./infrastructure/aws/codedeploy/applicationStart.sh
-      timeout: 180
+  ApplicationStart:
+    - location: ./applicationStart.sh
+      timeout: 3600
+      runas: centos
+  ApplicationStop:
+    - location: ./applicationStop.sh
+      timeout: 3600
       runas: centos

@@ -1,8 +1,8 @@
 const mysql = require('../services/db');
 const bcrypt = require('bcrypt');
-require('dotenv').config({ path: '/home/centos/webapp/var/.env' });
+require('dotenv').config({ path: '/home/centos/var/.env' });
 const SDC = require('statsd-client'),
-sdc = new SDC({host: 'localhost'});
+sdc = new SDC({host: 'localhost', port:8125});
 const log4js = require('log4js');
 	log4js.configure({
 	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
@@ -22,6 +22,7 @@ exports.authenticate = (req, res, next) => {
     const auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
     const username = auth[0];
     const password = auth[1];
+    let dbtimer = new Date();
     mysql.query('select * from User where email_address = (?)', [username], (err, data) => {
         if (data[0] != null) {
             bcrypt.compare(password, data[0].password, (err, result) => {
@@ -40,6 +41,8 @@ exports.authenticate = (req, res, next) => {
             logger.error('UnAuthorized');
             return res.status(401).json({ msg: 'Unauthorized' });
         }
-    })
+    });
+    sdc.timing('get.userdb.time', dbtimer);
+
 }
 
