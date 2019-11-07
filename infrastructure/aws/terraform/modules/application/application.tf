@@ -306,8 +306,6 @@ resource "aws_iam_role_policy_attachment" "ec2-rds-acccess" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
 }
 
-
-
 // Cloud Watch Agent Policy
 resource "aws_iam_role_policy_attachment" "ec2-cloudwatch-attach" {
   role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
