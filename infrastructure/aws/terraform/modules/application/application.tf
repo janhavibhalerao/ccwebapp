@@ -457,3 +457,98 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
   }
 
 }
+
+
+resource "aws_iam_role" "lambda_role" {
+	name = "lambda_role"
+	assume_role_policy = <<EOF
+	{
+		"Version" : "2012-10-17",
+		"Statement" : [
+			{
+				"Action" : "sts:AssumeRole",
+				"Principle" : {
+					"Service" : "lambda.amazonaws.com"
+				},
+				"Effect" : "Allow",
+			}
+		]
+	}
+	EOF
+}
+
+resource "aws_iam_policy" "lambda_log_policy" {
+	name = "lambda_log_policy"
+	description = "Policy for Updating lambda logs to cloudwatch"
+	policy = <<EOF
+	{
+		"Version" : "2012-10-17",
+		"Statment" : [
+			{
+				"Action" : [
+					"logs:CreateLogGroup",
+					"logs:CreateLogStream",
+					"logs:PutLogEvents"
+				],
+				"Resource" : "arn:aws:logs:*:*:*",
+				"Effect" : "Allow"
+			}
+		]
+	}
+	EOF
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_dynamo" {
+	role = "${aws_iam_role.lambda_role.name}"
+	policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_SNS" {
+	role = "${aws_iam_role.lambda_role.name}"
+	policy_arn = "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_SES" {
+	role = "${aws_iam_role.lambda_role.name}"
+	policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_S3" {
+	role = "${aws_iam_role.lambda_role.name}"
+	policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_cloudwatchlogs" {
+	role = "${aws_iam_role.lambda_role.name}"
+	policy_arn = "${aws_iam_policy.lambda_log_policy.arn}"
+}
+
+
+resource "aws_sns_topic" "user_recipe" {
+	name = "get-recipe"
+}
+
+resource "aws_sns_topic_subscription" "user_recipe_sqs-target" {
+	topic_arn = "${aws_sns_topic.user_recipe.arn}"
+	protocol = "lambda"
+	endpoint = "${aws_lambda_function.send_email.arn}"
+}
+
+resource "aws_lambda_permission" "lambda_permission" {
+	action = "lambda:*"
+	function_name = "${aws_lambda_function.send_email.function_name}"
+	principal = "sns.amazonaws.com"
+	source_arn = "${aws_sns_topic.user_recipe.arn}"
+
+}
+
+resource "aws_lambda_function" "send_email" {
+	function_name = "SendEmailOnSNS"
+	role = "${aws_iam_role.lambda_role.arn}"
+	memory_size = 512
+	s3_bucket = "${var.AWS_CD_S3_BUCKET_NAME}"
+	handler = ""
+	runtime = ""
+	timeout = 90
+}
+
