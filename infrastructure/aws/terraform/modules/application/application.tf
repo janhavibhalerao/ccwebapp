@@ -65,12 +65,12 @@ resource "aws_security_group" "database" {
 
 resource "aws_instance" "web" {
     ami       = "${var.AMI_ID}"
-    subnet_id = "${var.ec2subnet}"
+    subnet_id = "${var.ec2subnet1}"
     instance_type = "t2.micro"
     key_name = "${var.ec2Key}"
     iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
     ebs_block_device {
-        device_name = "/dev/sdg"
+        device_name = "/dev/sda1"
         volume_size = 20
         volume_type = "gp2"
         delete_on_termination = true
@@ -90,13 +90,194 @@ echo 'NODE_DB_HOST=${aws_db_instance.db-instance.address}'>>.env
 echo 'NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}'>>.env
 chmod 777 .env
 EOF
-
-  tags = {
-        Name = "csye6225-ec2"
-    }
+    
+    tags = "${map("Name", "${var.cd_appName}")}"
     vpc_security_group_ids = ["${aws_security_group.application.id}"]
-    depends_on = [aws_db_instance.db-instance, aws_s3_bucket.s3_bucket]
+    depends_on = [aws_db_instance.db-instance]
 }
+
+
+// AutoscalingGroup Configuration
+resource "aws_launch_configuration" "asg-config" {
+  name = "asg_launch_config"
+  image_id="${var.AMI_ID}"
+  instance_type="t2.micro"
+  key_name="${var.ec2Key}"
+  associate_public_ip_address = true
+  ebs_block_device {
+        device_name = "/dev/sda1"
+        volume_size = 20
+        volume_type = "gp2"
+        delete_on_termination = true
+    }
+  user_data = <<-EOF
+  #!/bin/bash
+  ####################################################
+  # Configure Node ENV_Variables                     #
+  ####################################################
+  cd /home/centos
+  mkdir var
+  cd var
+  echo 'NODE_DB_USER=${var.database_username}'>.env
+  echo 'NODE_DB_PASS=${var.AWS_DB_PASSWORD}'>>.env
+  echo 'NODE_DB_HOST=${aws_db_instance.db-instance.address}'>>.env
+  echo 'NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}'>>.env
+  chmod 777 .env
+  EOF
+  iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
+  security_groups= ["${aws_security_group.application.id}"]
+  depends_on = [aws_db_instance.db-instance]
+
+}
+
+// AutoScaling Group
+//TODO -- ALBTargetGroup
+resource "aws_autoscaling_group" "web_server_group" {
+  name                      = "WebServerGroup"
+  max_size                  = 10
+  min_size                  = 3
+  default_cooldown          = 60
+  desired_capacity          = 3
+  launch_configuration      = "${aws_launch_configuration.asg-config.name}"
+  vpc_zone_identifier       = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
+  tags = [
+    {
+      key                 = "Name"
+      value               = "${var.cd_appName}"
+      propagate_at_launch = true
+    }
+  ]
+}
+
+// ASG Scaleup policy
+resource "aws_autoscaling_policy" "web_server_scaleup_policy" {
+  name                   = "WebServerScaleUpPolicy"
+  scaling_adjustment     = 1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 60
+  autoscaling_group_name = "${aws_autoscaling_group.web_server_group.name}"
+}
+
+// ASG Scaledown policy
+resource "aws_autoscaling_policy" "web_server_scaledown_policy" {
+  name                   = "WebServerScaleDownPolicy"
+  scaling_adjustment     = -1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 60
+  autoscaling_group_name = "${aws_autoscaling_group.web_server_group.name}"
+}
+
+// ASG CW Alarm for scaleup
+resource "aws_cloudwatch_metric_alarm" "cw_alarm_high" {
+  alarm_name                = "CPUAlarmHigh"
+  comparison_operator       = "GreaterThanThreshold"
+  evaluation_periods        = "1"
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/EC2"
+  period                    = "300"
+  statistic                 = "Average"
+  threshold                 = "5"
+  dimensions = "${map("AutoScalingGroupName", "${aws_autoscaling_group.web_server_group.name}")}"
+  alarm_description         = "Scale-up if CPU > 5% for 5 minutes"
+  alarm_actions     = ["${aws_autoscaling_policy.web_server_scaleup_policy.arn}"]
+}
+
+// ASG CW Alarm for scaledown
+resource "aws_cloudwatch_metric_alarm" "cw_alarm_low" {
+  alarm_name                = "CPUAlarmLow"
+  comparison_operator       = "LessThanThreshold"
+  evaluation_periods        = "1"
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/EC2"
+  period                    = "300"
+  statistic                 = "Average"
+  threshold                 = "3"
+  alarm_description         = "Scale-down if CPU < 3% for 5 minutes"
+  dimensions = "${map("AutoScalingGroupName", "${aws_autoscaling_group.web_server_group.name}")}"
+  alarm_actions     = ["${aws_autoscaling_policy.web_server_scaledown_policy.arn}"]
+}
+
+// Application Load Balancer
+resource "aws_lb" "app_lb" {
+  name = "appLoadBalancer"
+  subnets = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
+  security_groups = ["${aws_security_group.sg_loadbalancer.id}"]
+  ip_address_type = "ipv4"
+  tags = [
+    {
+      key                 = "Name"
+      value               = "appLoadBalancer"
+    }
+  ]
+}
+
+//Application Firewall Load Balancer
+resource "aws_lb" "waf_lb" {
+  name = "wafLoadBalancer"
+  subnets = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
+  security_groups = ["${aws_security_group.sg_loadbalancer.id}"]
+  ip_address_type = "ipv4"
+  tags = [
+    {
+      key                 = "Name"
+      value               = "wafLoadBalancer"
+    }
+  ]
+}
+
+// LoadBalancer Security Group
+resource "aws_security_group" "sg_loadbalancer" {
+    name="LoadBalancer-Security-Group"
+    description="Enable HTTPS via port 3000"
+    vpc_id="${var.aws_vpc_id}"
+
+    ingress {
+        to_port = 80
+        from_port = 80
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    ingress {
+        to_port = 443
+        from_port = 443
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress {
+        to_port = 3000
+        from_port = 3000
+        protocol = "tcp"
+        security_groups = ["${aws_security_group.application.id}"]
+    }
+    tags = {
+        Name = "sg_loadbalancer"
+    }
+}
+
+resource "aws_lb_listener_certificate" "certificate1" {
+  listener_arn    = "${aws_lb_listener.alb_listener1.arn}"
+  certificate_arn = "${aws_acm_certificate.example.arn}"
+}
+
+// LoadBalancer Listener
+resource "aws_lb_listener" "alb_listener1" {
+  load_balancer_arn = "${aws_lb.front_end.arn}"
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = "arn:aws:iam::187416307283:server-certificate/test_cert_rab3wuqwgja25ct3n4jdj2tzu4"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = "${aws_lb_target_group.front_end.arn}"
+  }
+}
+
+
+
+
 
 resource "aws_s3_bucket" "s3_bucket" {
     bucket = "${var.AWS_S3_BUCKET_NAME}"
@@ -447,7 +628,7 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
     ec2_tag_filter {
       key   = "Name"
       type  = "KEY_AND_VALUE"
-      value = "csye6225-ec2"
+      value = "${var.cd_appName}"
     }
   }
   

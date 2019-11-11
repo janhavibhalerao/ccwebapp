@@ -6,7 +6,11 @@ variable "aws_vpc_id" {}
 
 variable "aws_subnet_group" {}
 
-variable "ec2subnet" {}
+variable "ec2subnet1" {}
+
+variable "ec2subnet2" {}
+
+variable "ec2subnet3" {}
 
 variable "AWS_S3_BUCKET_NAME" {
     description = "Enter a s3 bucket name for image. Example (webapp.your-domain-name.tld)"
@@ -52,4 +56,10 @@ variable "database_username" {
     description = "Enter MYSQL User name"
     type = string
     default = "dbuser"
+}
+
+variable "cd_appName" {
+    description = "Enter the app name for code deploy"
+    type = string
+    default = "csye6225-ec2"
 }
