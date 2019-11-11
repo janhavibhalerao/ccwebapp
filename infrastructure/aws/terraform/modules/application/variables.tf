@@ -63,3 +63,18 @@ variable "cd_appName" {
     type = string
     default = "csye6225-ec2"
 }
+
+variable "certificate1" {
+    description = "AWS SSL Certificate ARN1"
+    type = string
+}
+
+variable "certificate2" {
+    description = "AWS SSL Certificate ARN2"
+    type = string
+}
+
+variable "zoneName" {
+    description = "Available zone Name"
+    type = string
+}

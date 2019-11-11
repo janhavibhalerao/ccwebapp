@@ -35,12 +35,12 @@ resource "aws_security_group" "application" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
-    egress {
-      from_port   = 0
-      to_port     = 0
-      protocol    = "-1"
-      cidr_blocks = ["0.0.0.0/0"]
-    }
+    // egress {
+    //   from_port   = 0
+    //   to_port     = 0
+    //   protocol    = "-1"
+    //   cidr_blocks = ["0.0.0.0/0"]
+    // }
 
     tags = {
         Name = "application"
@@ -131,7 +131,6 @@ resource "aws_launch_configuration" "asg-config" {
 }
 
 // AutoScaling Group
-//TODO -- ALBTargetGroup
 resource "aws_autoscaling_group" "web_server_group" {
   name                      = "WebServerGroup"
   max_size                  = 10
@@ -140,6 +139,7 @@ resource "aws_autoscaling_group" "web_server_group" {
   desired_capacity          = 3
   launch_configuration      = "${aws_launch_configuration.asg-config.name}"
   vpc_zone_identifier       = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
+  target_group_arns = ["${aws_lb_target_group.lb_tg_webapp.arn}", "${aws_lb_target_group.lb_tg_wafwebapp.arn}"]
   tags = [
     {
       key                 = "Name"
@@ -256,28 +256,92 @@ resource "aws_security_group" "sg_loadbalancer" {
     }
 }
 
-resource "aws_lb_listener_certificate" "certificate1" {
-  listener_arn    = "${aws_lb_listener.alb_listener1.arn}"
-  certificate_arn = "${aws_acm_certificate.example.arn}"
-}
-
 // LoadBalancer Listener
 resource "aws_lb_listener" "alb_listener1" {
-  load_balancer_arn = "${aws_lb.front_end.arn}"
+  load_balancer_arn = "${aws_lb.app_lb.arn}"
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = "arn:aws:iam::187416307283:server-certificate/test_cert_rab3wuqwgja25ct3n4jdj2tzu4"
+  certificate_arn   = "${var.certificate1}"
 
   default_action {
     type             = "forward"
-    target_group_arn = "${aws_lb_target_group.front_end.arn}"
+    target_group_arn = "${aws_lb_target_group.lb_tg_webapp.arn}"
+  }
+}
+
+// LoadBalancer WAF Listener
+resource "aws_lb_listener" "alb_listener2" {
+  load_balancer_arn = "${aws_lb.waf_lb.arn}"
+  port              = "443"
+  protocol          = "HTTPS"
+  certificate_arn   = "${var.certificate1}"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = "${aws_lb_target_group.lb_tg_wafwebapp.arn}"
   }
 }
 
 
+// WebAppTargetGroup
+resource "aws_lb_target_group" "lb_tg_webapp" {
+  name     = "WebAppTargetGroup"
+  health_check {
+    interval = 10
+    timeout = 5
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    path = "/health"
+  }  
+  deregistration_delay = 20
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = "${var.aws_vpc_id}"
+}
 
+// WAF WebAppTargetGroup2
+resource "aws_lb_target_group" "lb_tg_wafwebapp" {
+  name     = "WAFWebAppTargetGroup"
+  health_check {
+    interval = 10
+    timeout = 5
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    path = "/health"
+  }  
+  deregistration_delay = 20
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = "${var.aws_vpc_id}"
+}
 
+// Listener Certificate Additional1
+resource "aws_lb_listener_certificate" "cert1" {
+  listener_arn    = "${aws_lb_listener.alb_listener1.arn}"
+  certificate_arn = "${var.certificate2}"
+}
+
+// Listener Certificate Additional2
+resource "aws_lb_listener_certificate" "cert2" {
+  listener_arn    = "${aws_lb_listener.alb_listener2.arn}"
+  certificate_arn = "${var.certificate2}"
+}
+
+data "aws_route53_zone" "primary" {
+  name         = "${var.zoneName}"
+}
+
+// DNS Record
+resource "aws_route53_record" "dns_record" {
+  zone_id = "${aws_route53_zone.primary.zone_id}"
+  name    = "${var.zoneName}"
+  type    = "A"
+  alias {
+    name                   = "${aws_lb.app_lb.dns_name}"
+    zone_id                = "${aws_lb.app_lb.zone_id}"
+    evaluate_target_health = true
+  }
+}
 
 resource "aws_s3_bucket" "s3_bucket" {
     bucket = "${var.AWS_S3_BUCKET_NAME}"
@@ -377,13 +441,18 @@ resource "aws_db_instance" "db-instance" {
 resource "aws_dynamodb_table" "csye6225" {
     name           = "csye6225"
     billing_mode   = "PROVISIONED"
-    read_capacity  = 20
-    write_capacity = 20
+    read_capacity  = 10
+    write_capacity = 5
     hash_key       = "id"
 
     attribute {
         name = "id"
         type = "S"
+    }
+
+    ttl {
+      attribute_name = "TimeToExist"
+      enabled = true
     }
 
     tags = {
@@ -618,11 +687,15 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
   app_name              = "${aws_codedeploy_app.cd-webapp.name}"
   deployment_group_name = "csye6225-webapp-deployment"
   service_role_arn      = "${aws_iam_role.codedeploy_service.arn}"
-
   deployment_config_name = "CodeDeployDefault.AllAtOnce"
   deployment_style {
     deployment_option = "WITHOUT_TRAFFIC_CONTROL"
     deployment_type   = "IN_PLACE"
+  }
+  load_balancer_info {
+    target_group_info {
+      name = "${aws_lb_target_group.lb_tg_webapp.name}"
+    }
   }
   ec2_tag_set {
     ec2_tag_filter {

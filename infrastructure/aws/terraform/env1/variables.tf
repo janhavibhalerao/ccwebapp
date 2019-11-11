@@ -72,3 +72,18 @@ variable "database_username" {
     type = string
     default = "dbuser"
 }
+
+variable "certificate1" {
+    description = "AWS SSL Certificate ARN1"
+    type = string
+}
+
+variable "certificate2" {
+    description = "AWS SSL Certificate ARN2"
+    type = string
+}
+
+variable "zoneName" {
+    description = "Available zone Name"
+    type = string
+}
