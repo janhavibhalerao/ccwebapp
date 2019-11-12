@@ -713,8 +713,8 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
 }
 
 
-resource "aws_iam_role" "lambda_role" {
-	name = "lambda_role"
+resource "aws_iam_role" "lambda-sns-execution-role" {
+	name = "lambda-sns-execution-role"
 	assume_role_policy = <<EOF
 	{
 		"Version" : "2012-10-17",
@@ -753,27 +753,32 @@ resource "aws_iam_policy" "lambda_log_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_dynamo" {
-	role = "${aws_iam_role.lambda_role.name}"
+	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_SNS" {
-	role = "${aws_iam_role.lambda_role.name}"
+resource "aws_iam_role_policy_attachment" "lambda_route53" {
+	role = "${aws_iam_role.lambda-sns-execution-role.name}"
+	policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
+}
+
+/*resource "aws_iam_role_policy_attachment" "lambda_SNS" {
+	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
-}
+}*/
 
-resource "aws_iam_role_policy_attachment" "lambda_SES" {
-	role = "${aws_iam_role.lambda_role.name}"
+/*resource "aws_iam_role_policy_attachment" "lambda_SES" {
+	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
-}
+}*/
 
-resource "aws_iam_role_policy_attachment" "lambda_S3" {
-	role = "${aws_iam_role.lambda_role.name}"
+/*resource "aws_iam_role_policy_attachment" "lambda_S3" {
+	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-}
+}*/
 
 resource "aws_iam_role_policy_attachment" "lambda_cloudwatchlogs" {
-	role = "${aws_iam_role.lambda_role.name}"
+	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "${aws_iam_policy.lambda_log_policy.arn}"
 }
 
@@ -782,14 +787,14 @@ resource "aws_sns_topic" "user_recipe" {
 	name = "get-recipe"
 }
 
-resource "aws_sns_topic_subscription" "user_recipe_sqs-target" {
+resource "aws_sns_topic_subscription" "user_recipe_sns" {
 	topic_arn = "${aws_sns_topic.user_recipe.arn}"
 	protocol = "lambda"
 	endpoint = "${aws_lambda_function.send_email.arn}"
 }
 
-resource "aws_lambda_permission" "lambda_permission" {
-	action = "lambda:*"
+resource "aws_lambda_permission" "lambda_invoke_permission" {
+  action        = "lambda:InvokeFunction"
 	function_name = "${aws_lambda_function.send_email.function_name}"
 	principal = "sns.amazonaws.com"
 	source_arn = "${aws_sns_topic.user_recipe.arn}"
@@ -797,12 +802,13 @@ resource "aws_lambda_permission" "lambda_permission" {
 }
 
 resource "aws_lambda_function" "send_email" {
-	function_name = "SendEmailOnSNS"
-	role = "${aws_iam_role.lambda_role.arn}"
+  s3_bucket = "${var.AWS_CD_S3_BUCKET_NAME}"
+  //s3_key =
+	function_name = "sendEmail"
+	role = "${aws_iam_role.lambda-sns-execution-role.arn}"
+  handler = "index.handler"
+  runtime = "nodejs8.10"
 	memory_size = 512
-	s3_bucket = "${var.AWS_CD_S3_BUCKET_NAME}"
-	handler = ""
-	runtime = ""
-	timeout = 90
+	timeout = 25
 }
 
