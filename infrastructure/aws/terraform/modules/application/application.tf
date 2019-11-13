@@ -792,12 +792,12 @@ resource "aws_iam_role_policy_attachment" "lambda_DynamoDBExecutionRole" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole"
 }
 
-resource "aws_sns_topic" "user_recipe" {
-	name = "get-recipe"
+resource "aws_sns_topic" "email_request" {
+	name = "email_request"
 }
 
-resource "aws_sns_topic_subscription" "user_recipe_sns" {
-	topic_arn = "${aws_sns_topic.user_recipe.arn}"
+resource "aws_sns_topic_subscription" "email_request_sns" {
+	topic_arn = "${aws_sns_topic.email_request.arn}"
 	protocol = "lambda"
 	endpoint = "${aws_lambda_function.send_email.arn}"
 }
@@ -806,7 +806,7 @@ resource "aws_lambda_permission" "lambda_invoke_permission" {
   action        = "lambda:InvokeFunction"
 	function_name = "${aws_lambda_function.send_email.function_name}"
 	principal = "sns.amazonaws.com"
-	source_arn = "${aws_sns_topic.user_recipe.arn}"
+	source_arn = "${aws_sns_topic.email_request.arn}"
 
 }
 

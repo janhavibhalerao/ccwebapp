@@ -10,13 +10,14 @@ const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image')
 const singleUpload = upload.single('image');
 require('dotenv').config({ path: '/home/centos/var/.env' });
 const SDC = require('statsd-client'),
-sdc = new SDC({host: 'localhost' , port:8125});
+    sdc = new SDC({ host: 'localhost', port: 8125 });
 const log4js = require('log4js');
-	log4js.configure({
-	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
-	  categories: { default: { appenders: ['logs'], level: 'info' } }
-    });
+log4js.configure({
+    appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
+    categories: { default: { appenders: ['logs'], level: 'info' } }
+});
 const logger = log4js.getLogger('logs');
+const sns = new aws.SNS();
 
 
 // Protected route: Update Recipe
@@ -26,7 +27,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
     if (res.locals.user) {
         if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
             || req.body.id != null || req.body.total_time_in_min != null) {
-            logger.error('Invalid Request body');    
+            logger.error('Invalid Request body');
             return res.status(400).json({ msg: 'Invalid Request body' });
         } else {
             let dbtimer = new Date();
@@ -108,7 +109,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                                 });
                                             }
                                         });
-                                        sdc.timing('put.recipedb.time', dbtimer);
+                                    sdc.timing('put.recipedb.time', dbtimer);
                                 }
                                 else {
                                     logger.error('Invalid Recipe Steps');
@@ -207,7 +208,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                             });
                         }
                     });
-                    sdc.timing('post.recipedb.time', dbtimer);
+                sdc.timing('post.recipedb.time', dbtimer);
             } else {
                 logger.error('Invalid steps for Recipe');
                 return res.status(400).json({ msg: 'Invalid steps for Recipe' });
@@ -348,7 +349,7 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
                         } else {
                             if (req.file == null) {
                                 logger.error('Invalid Request Body');
-                                return res.status(400).json({ msg: 'Invalid Request body'});
+                                return res.status(400).json({ msg: 'Invalid Request body' });
                             } else {
                                 let image = {
                                     'id': uuid(),
@@ -523,6 +524,45 @@ router.get('/', (req, res) => {
         return res.status(400).json({ msg: 'Request type must be JSON!' });
     }
     sdc.timing('Get.NewestRecipe.time', timer);
+});
+
+//Protected Route:Request link to all of my recipes
+router.post('/myrecipes', checkUser.authenticate, (req, res) => {
+    sdc.increment('POST myrecipes Triggered');
+    if (res.locals.user) {
+        let topic = {};
+        let ARN;
+
+        aws.config.update({ region: 'us-east-1' });
+        sns.listTopics(topic, (err, data) => {
+            if (err) {
+                console.log('err in sns listTopics', err);
+            }
+            else {
+                ARN = data.Topics[0].TopicArn;
+                let params = {
+                    Message: 'Recipe links:',
+                    TopicArn: ARN
+                };
+
+                sns.publish(params, (err, data) => {
+                    if (err) {
+                        console.log('error in SNS publish', err);
+                        logger.error('error in SNS publish');
+                        res.status(400).json({ msg: 'error' });
+                    } else {
+                        console.log('SNS publish success', data);
+                        logger.info('Request recieved!')
+                        return res.status(200).json({ msg: 'Request recieved!' });
+                    }
+                })
+            }
+        })
+    }
+    else {
+        logger.error('User unauthorized!')
+        return res.status(401).json({ msg: 'User unauthorized!' });
+    }
 });
 
 module.exports = router;    
