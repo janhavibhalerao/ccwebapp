@@ -762,26 +762,35 @@ resource "aws_iam_role_policy_attachment" "lambda_route53" {
 	policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
 }
 
-/*resource "aws_iam_role_policy_attachment" "lambda_SNS" {
+resource "aws_iam_role_policy_attachment" "lambda_SNS" {
 	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
-}*/
+}
 
-/*resource "aws_iam_role_policy_attachment" "lambda_SES" {
+resource "aws_iam_role_policy_attachment" "lambda_SES" {
 	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
-}*/
+}
 
-/*resource "aws_iam_role_policy_attachment" "lambda_S3" {
+resource "aws_iam_role_policy_attachment" "lambda_S3" {
 	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-}*/
+}
 
 resource "aws_iam_role_policy_attachment" "lambda_cloudwatchlogs" {
 	role = "${aws_iam_role.lambda-sns-execution-role.name}"
 	policy_arn = "${aws_iam_policy.lambda_log_policy.arn}"
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_basicExecutionRole" {
+  roles = "${aws_iam_role.lambda-sns-execution-role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_DynamoDBExecutionRole" {
+  roles = "${aws_iam_role.lambda-sns-execution-role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole"
+}
 
 resource "aws_sns_topic" "user_recipe" {
 	name = "get-recipe"
