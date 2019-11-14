@@ -208,7 +208,7 @@ resource "aws_lb" "app_lb" {
     }
 }
 
-//Application Firewall Load Balancer
+//Application without Firewall Load Balancer
 resource "aws_lb" "waf_lb" {
   name = "wafLoadBalancer"
   subnets = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
@@ -754,3 +754,8 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
   }
 
 }
+
+output "appLoadBalancer" {
+  value = "${aws_lb.app_lb.arn}"
+}
+
