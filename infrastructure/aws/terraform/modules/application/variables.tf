@@ -6,12 +6,6 @@ variable "aws_vpc_id" {}
 
 variable "aws_subnet_group" {}
 
-variable "ec2subnet1" {}
-
-variable "ec2subnet2" {}
-
-variable "ec2subnet3" {}
-
 variable "AWS_S3_BUCKET_NAME" {
     description = "Enter a s3 bucket name for image. Example (webapp.your-domain-name.tld)"
     type = string
@@ -42,10 +36,7 @@ variable "aws_region" {
     type = string
     default = "us-east-1"
 }
-variable "aws_account_id" {
-    description = "Enter AWS_ACCOUNT_ID"
-    type = string
-}
+
 variable "code_deploy_application_name" {
     description = "Enter CODE_DEPLOY_APPLICATION_NAME"
     type = string
@@ -64,17 +55,18 @@ variable "cd_appName" {
     default = "csye6225-ec2"
 }
 
-variable "certificate1" {
-    description = "AWS SSL Certificate ARN1"
+variable "domainName" {
+    description = "Enter your domain name"
     type = string
 }
 
-variable "certificate2" {
-    description = "AWS SSL Certificate ARN2"
+variable "AWS_LAMBDA_S3_BUCKET_NAME" {
+    description = "Enter Lambda S3 Bucket Name"
     type = string
 }
 
-variable "zoneName" {
-    description = "Available zone Name"
-    type = string
-}
+variable "ec2subnet1" {}
+
+variable "ec2subnet2" {}
+
+variable "ec2subnet3" {}

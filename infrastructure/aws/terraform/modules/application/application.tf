@@ -63,38 +63,38 @@ resource "aws_security_group" "database" {
     }
 }
 
-resource "aws_instance" "web" {
-    ami       = "${var.AMI_ID}"
-    subnet_id = "${var.ec2subnet1}"
-    instance_type = "t2.micro"
-    key_name = "${var.ec2Key}"
-    iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
-    ebs_block_device {
-        device_name = "/dev/sda1"
-        volume_size = 20
-        volume_type = "gp2"
-        delete_on_termination = true
-    }
+// resource "aws_instance" "web" {
+//     ami       = "${var.AMI_ID}"
+//     subnet_id = "${var.ec2subnet1}"
+//     instance_type = "t2.micro"
+//     key_name = "${var.ec2Key}"
+//     iam_instance_profile = "${aws_iam_instance_profile.cd_ec2_profile.name}"
+//     ebs_block_device {
+//         device_name = "/dev/sdg"
+//         volume_size = 20
+//         volume_type = "gp2"
+//         delete_on_termination = true
+//     }
 
-user_data = <<-EOF
-#!/bin/bash
-####################################################
-# Configure Node ENV_Variables                     #
-####################################################
-cd /home/centos
-mkdir var
-cd var
-echo 'NODE_DB_USER=${var.database_username}'>.env
-echo 'NODE_DB_PASS=${var.AWS_DB_PASSWORD}'>>.env
-echo 'NODE_DB_HOST=${aws_db_instance.db-instance.address}'>>.env
-echo 'NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}'>>.env
-chmod 777 .env
-EOF
+// user_data = <<-EOF
+// #!/bin/bash
+// ####################################################
+// # Configure Node ENV_Variables                     #
+// ####################################################
+// cd /home/centos
+// mkdir var
+// cd var
+// echo 'NODE_DB_USER=${var.database_username}'>.env
+// echo 'NODE_DB_PASS=${var.AWS_DB_PASSWORD}'>>.env
+// echo 'NODE_DB_HOST=${aws_db_instance.db-instance.address}'>>.env
+// echo 'NODE_S3_BUCKET=${var.AWS_S3_BUCKET_NAME}'>>.env
+// chmod 777 .env
+// EOF
     
-    tags = "${map("Name", "${var.cd_appName}")}"
-    vpc_security_group_ids = ["${aws_security_group.application.id}"]
-    depends_on = [aws_db_instance.db-instance]
-}
+//     tags = "${map("Name", "${var.cd_appName}")}"
+//     vpc_security_group_ids = ["${aws_security_group.application.id}"]
+//     depends_on = [aws_db_instance.db-instance]
+// }
 
 
 // AutoscalingGroup Configuration
@@ -105,7 +105,7 @@ resource "aws_launch_configuration" "asg-config" {
   key_name="${var.ec2Key}"
   associate_public_ip_address = true
   ebs_block_device {
-        device_name = "/dev/sda1"
+        device_name = "/dev/sdg"
         volume_size = 20
         volume_type = "gp2"
         delete_on_termination = true
@@ -203,12 +203,9 @@ resource "aws_lb" "app_lb" {
   subnets = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
   security_groups = ["${aws_security_group.sg_loadbalancer.id}"]
   ip_address_type = "ipv4"
-  tags = [
-    {
-      key                 = "Name"
-      value               = "appLoadBalancer"
+  tags = {
+      Name = "appLoadBalancer"
     }
-  ]
 }
 
 //Application Firewall Load Balancer
@@ -217,12 +214,9 @@ resource "aws_lb" "waf_lb" {
   subnets = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
   security_groups = ["${aws_security_group.sg_loadbalancer.id}"]
   ip_address_type = "ipv4"
-  tags = [
-    {
-      key                 = "Name"
-      value               = "wafLoadBalancer"
+  tags = {
+      Name = "wafLoadBalancer"
     }
-  ]
 }
 
 // LoadBalancer Security Group
@@ -256,12 +250,18 @@ resource "aws_security_group" "sg_loadbalancer" {
     }
 }
 
+data "aws_acm_certificate" "certificate" {
+  domain      = "${var.domainName}"
+  types       = ["AMAZON_ISSUED"]
+  most_recent = true
+}
+
 // LoadBalancer Listener
 resource "aws_lb_listener" "alb_listener1" {
   load_balancer_arn = "${aws_lb.app_lb.arn}"
   port              = "443"
   protocol          = "HTTPS"
-  certificate_arn   = "${var.certificate1}"
+  certificate_arn   = "${data.aws_acm_certificate.certificate.arn}"
 
   default_action {
     type             = "forward"
@@ -274,7 +274,7 @@ resource "aws_lb_listener" "alb_listener2" {
   load_balancer_arn = "${aws_lb.waf_lb.arn}"
   port              = "443"
   protocol          = "HTTPS"
-  certificate_arn   = "${var.certificate1}"
+  certificate_arn   = "${data.aws_acm_certificate.certificate.arn}"
 
   default_action {
     type             = "forward"
@@ -315,26 +315,28 @@ resource "aws_lb_target_group" "lb_tg_wafwebapp" {
   vpc_id   = "${var.aws_vpc_id}"
 }
 
-// Listener Certificate Additional1
-resource "aws_lb_listener_certificate" "cert1" {
-  listener_arn    = "${aws_lb_listener.alb_listener1.arn}"
-  certificate_arn = "${var.certificate2}"
-}
 
-// Listener Certificate Additional2
-resource "aws_lb_listener_certificate" "cert2" {
-  listener_arn    = "${aws_lb_listener.alb_listener2.arn}"
-  certificate_arn = "${var.certificate2}"
-}
+
+// // Listener Certificate Additional1
+// resource "aws_lb_listener_certificate" "cert1" {
+//   listener_arn    = "${aws_lb_listener.alb_listener1.arn}"
+//   certificate_arn = "${var.certificate2}"
+// }
+
+// // Listener Certificate Additional2
+// resource "aws_lb_listener_certificate" "cert2" {
+//   listener_arn    = "${aws_lb_listener.alb_listener2.arn}"
+//   certificate_arn = "${var.certificate2}"
+// }
 
 data "aws_route53_zone" "primary" {
-  name         = "${var.zoneName}"
+  name         = "${var.domainName}"
 }
 
 // DNS Record
 resource "aws_route53_record" "dns_record" {
-  zone_id = "${aws_route53_zone.primary.zone_id}"
-  name    = "${var.zoneName}"
+  zone_id = "${data.aws_route53_zone.primary.zone_id}"
+  name    = "${var.domainName}"
   type    = "A"
   alias {
     name                   = "${aws_lb.app_lb.dns_name}"
@@ -343,6 +345,7 @@ resource "aws_route53_record" "dns_record" {
   }
 }
 
+// S3 bucket for images
 resource "aws_s3_bucket" "s3_bucket" {
     bucket = "${var.AWS_S3_BUCKET_NAME}"
     force_destroy = true
@@ -372,6 +375,7 @@ resource "aws_s3_bucket" "s3_bucket" {
     }
 }
 
+// S3 bucket for images restriction
 resource "aws_s3_bucket_public_access_block" "s3_block" {
   bucket = "${aws_s3_bucket.s3_bucket.id}"
   block_public_acls   = true
@@ -381,6 +385,7 @@ resource "aws_s3_bucket_public_access_block" "s3_block" {
 
 }
 
+// S3 bucket for Code deploy
 resource "aws_s3_bucket" "cd_s3_bucket" {
     bucket = "${var.AWS_CD_S3_BUCKET_NAME}"
     force_destroy = true
@@ -406,6 +411,7 @@ resource "aws_s3_bucket" "cd_s3_bucket" {
     }
 }
 
+// Code Deploy S3 bucket restrictions
 resource "aws_s3_bucket_public_access_block" "cd_s3_block" {
   bucket = "${aws_s3_bucket.cd_s3_bucket.id}"
   block_public_acls   = true
@@ -414,6 +420,40 @@ resource "aws_s3_bucket_public_access_block" "cd_s3_block" {
   restrict_public_buckets = true
 }
 
+// S3 Bucket for Lambda
+resource "aws_s3_bucket" "lambda_s3_bucket" {
+    bucket = "${var.AWS_LAMBDA_S3_BUCKET_NAME}"
+    force_destroy = true
+    acl    = "private"
+    
+    server_side_encryption_configuration {
+        rule {
+            apply_server_side_encryption_by_default {
+              sse_algorithm     = "AES256"
+            }   
+        }
+    }
+
+     lifecycle_rule {
+        id = "cleanup" 
+        enabled = true
+        expiration {
+            days = 60
+        }
+    }
+    tags = {
+        Name = "aws_lmd_s3_bucket"
+    }
+}
+
+// Restrictions for Lambda Bucket
+resource "aws_s3_bucket_public_access_block" "lmd_s3_block" {
+  bucket = "${aws_s3_bucket.lambda_s3_bucket.id}"
+  block_public_acls   = true
+  block_public_policy = true
+  ignore_public_acls = true
+  restrict_public_buckets = true
+}
 
 resource "aws_db_instance" "db-instance" {
     engine = "mysql"
@@ -625,6 +665,8 @@ EOF
    
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_user_policy_attachment" "CircleCI-Upload-To-S3-attach" {
   user       = "${var.CircleCIUser}"
   policy_arn = "${aws_iam_policy.CircleCI-Upload-To-S3_policy.arn}"
@@ -645,7 +687,7 @@ resource "aws_iam_policy" "CircleCI-Code-Deploy_policy" {
         "codedeploy:GetApplicationRevision"
       ],
       "Resource": [
-        "arn:aws:codedeploy:${var.aws_region}:${var.aws_account_id}:application:${var.code_deploy_application_name}"
+        "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:application:${var.code_deploy_application_name}"
       ]
     },
     {
@@ -664,9 +706,9 @@ resource "aws_iam_policy" "CircleCI-Code-Deploy_policy" {
         "codedeploy:GetDeploymentConfig"
       ],
       "Resource": [
-        "arn:aws:codedeploy:${var.aws_region}:${var.aws_account_id}:deploymentconfig:CodeDeployDefault.OneAtATime",
-        "arn:aws:codedeploy:${var.aws_region}:${var.aws_account_id}:deploymentconfig:CodeDeployDefault.HalfAtATime",
-        "arn:aws:codedeploy:${var.aws_region}:${var.aws_account_id}:deploymentconfig:CodeDeployDefault.AllAtOnce"
+        "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentconfig:CodeDeployDefault.OneAtATime",
+        "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentconfig:CodeDeployDefault.HalfAtATime",
+        "arn:aws:codedeploy:${var.aws_region}:${data.aws_caller_identity.current.account_id}:deploymentconfig:CodeDeployDefault.AllAtOnce"
       ]
     }
   ]
@@ -711,113 +753,3 @@ resource "aws_codedeploy_deployment_group" "cd-webapp-group" {
   }
 
 }
-
-
-resource "aws_iam_role" "lambda-sns-execution-role" {
-	name = "lambda-sns-execution-role"
-	assume_role_policy = <<EOF
-	{
-		"Version" : "2012-10-17",
-		"Statement" : [
-			{
-				"Action" : "sts:AssumeRole",
-				"Principle" : {
-					"Service" : "lambda.amazonaws.com"
-				},
-				"Effect" : "Allow",
-			}
-		]
-	}
-	EOF
-}
-
-resource "aws_iam_policy" "lambda_log_policy" {
-	name = "lambda_log_policy"
-	description = "Policy for Updating lambda logs to cloudwatch"
-	policy = <<EOF
-	{
-		"Version" : "2012-10-17",
-		"Statment" : [
-			{
-				"Action" : [
-					"logs:CreateLogGroup",
-					"logs:CreateLogStream",
-					"logs:PutLogEvents"
-				],
-				"Resource" : "arn:aws:logs:*:*:*",
-				"Effect" : "Allow"
-			}
-		]
-	}
-	EOF
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_dynamo" {
-	role = "${aws_iam_role.lambda-sns-execution-role.name}"
-	policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_route53" {
-	role = "${aws_iam_role.lambda-sns-execution-role.name}"
-	policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_SNS" {
-	role = "${aws_iam_role.lambda-sns-execution-role.name}"
-	policy_arn = "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_SES" {
-	role = "${aws_iam_role.lambda-sns-execution-role.name}"
-	policy_arn = "arn:aws:iam::aws:policy/AmazonSESFullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_S3" {
-	role = "${aws_iam_role.lambda-sns-execution-role.name}"
-	policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_cloudwatchlogs" {
-	role = "${aws_iam_role.lambda-sns-execution-role.name}"
-	policy_arn = "${aws_iam_policy.lambda_log_policy.arn}"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_basicExecutionRole" {
-  roles = "${aws_iam_role.lambda-sns-execution-role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_DynamoDBExecutionRole" {
-  roles = "${aws_iam_role.lambda-sns-execution-role.name}"
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole"
-}
-
-resource "aws_sns_topic" "email_request" {
-	name = "email_request"
-}
-
-resource "aws_sns_topic_subscription" "email_request_sns" {
-	topic_arn = "${aws_sns_topic.email_request.arn}"
-	protocol = "lambda"
-	endpoint = "${aws_lambda_function.send_email.arn}"
-}
-
-resource "aws_lambda_permission" "lambda_invoke_permission" {
-  action        = "lambda:InvokeFunction"
-	function_name = "${aws_lambda_function.send_email.function_name}"
-	principal = "sns.amazonaws.com"
-	source_arn = "${aws_sns_topic.email_request.arn}"
-
-}
-
-resource "aws_lambda_function" "send_email" {
-  s3_bucket = "${var.AWS_CD_S3_BUCKET_NAME}"
-  //s3_key =
-	function_name = "sendEmail"
-	role = "${aws_iam_role.lambda-sns-execution-role.arn}"
-  handler = "index.handler"
-  runtime = "nodejs8.10"
-	memory_size = 512
-	timeout = 25
-}
-

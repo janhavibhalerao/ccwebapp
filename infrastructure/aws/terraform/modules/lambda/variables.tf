@@ -1,0 +1,4 @@
+variable "AWS_LAMBDA_S3_BUCKET_NAME" {
+    description = "Enter Lambda S3 Bucket Name"
+    type = string
+}

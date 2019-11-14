@@ -52,10 +52,6 @@ variable "CircleCIUser" {
     default = "circleci"
 }
 
-variable "aws_account_id" {
-    description = "Enter AWS_ACCOUNT_ID"
-    type = string
-}
 variable "code_deploy_application_name" {
     description = "Enter CODE_DEPLOY_APPLICATION_NAME"
     type = string
@@ -73,17 +69,13 @@ variable "database_username" {
     default = "dbuser"
 }
 
-variable "certificate1" {
-    description = "AWS SSL Certificate ARN1"
+variable "domainName" {
+    description = "Enter your domain name"
     type = string
 }
 
-variable "certificate2" {
-    description = "AWS SSL Certificate ARN2"
+variable "AWS_LAMBDA_S3_BUCKET_NAME" {
+    description = "Enter Lambda S3 Bucket Name"
     type = string
 }
 
-variable "zoneName" {
-    description = "Available zone Name"
-    type = string
-}

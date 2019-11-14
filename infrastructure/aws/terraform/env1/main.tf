@@ -29,7 +29,8 @@ module "application" {
     ec2subnet2 = "${module.networking.subnet_id2}"
     ec2subnet3 = "${module.networking.subnet_id3}"
     ec2Key = "${var.ec2Key}"
-    aws_account_id = "${var.aws_account_id}"
     aws_region = "${var.aws_region}"
     database_username = "${var.database_username}"
+    domainName = "${var.domainName}"
+    AWS_LAMBDA_S3_BUCKET_NAME = "${var.AWS_LAMBDA_S3_BUCKET_NAME}"
 }
