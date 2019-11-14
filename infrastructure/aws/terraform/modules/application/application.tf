@@ -654,7 +654,8 @@ policy = <<EOF
                 "s3:PutObject"
                 ],
                 "Resource": [
-                    "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*"
+                    "arn:aws:s3:::${var.AWS_CD_S3_BUCKET_NAME}/*",
+                    "arn:aws:s3:::${var.AWS_LAMBDA_S3_BUCKET_NAME}/*"
                     ]
             
         }
