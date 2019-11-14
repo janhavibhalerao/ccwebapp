@@ -530,34 +530,64 @@ router.get('/', (req, res) => {
 router.post('/myrecipes', checkUser.authenticate, (req, res) => {
     sdc.increment('POST myrecipes Triggered');
     if (res.locals.user) {
+        //let recipeIds = [];
         let topic = {};
         let ARN;
-
         aws.config.update({ region: 'us-east-1' });
-        sns.listTopics(topic, (err, data) => {
+
+        let header = req.headers['authorization'] || '',
+            token = header.split(/\s+/).pop() || '',
+            auth = new Buffer.from(token, 'base64').toString(),
+            parts = auth.split(/:/),
+            email = parts[0];
+
+        mysql.query(`select id from User where email_address=(?)`, [email], (err, data) => {
             if (err) {
-                console.log('err in sns listTopics', err);
+                logger.error('Failed to get author_id from email!', err);
+                return res.status(400).json({ msg: 'Failed to get author_id from email!' });
             }
             else {
-                ARN = data.Topics[0].TopicArn;
-                let params = {
-                    Message: 'Recipe links:',
-                    TopicArn: ARN
-                };
+                mysql.query(`select id from Recipe where author_id=(?)`, [data[0].id], (err, result) => {
+                    if (result != null) {
+                        sns.listTopics(topic, (err, data) => {
+                            if (err) {
+                                logger.error('err in sns listTopics', err);
+                                res.status(400).json({ msg: 'err in sns listTopics' });
+                            }
+                            else {
+                                ARN = data.Topics[0].TopicArn;
+                                //currently sending only 1 recipe
+                                let params = {
+                                    TopicArn: ARN,
+                                    MessageStructure: 'json',
+                                    Message: JSON.stringify({
+                                        'email': email,
+                                        'recipeIds': result[0].id
+                                    })
+                                };
 
-                sns.publish(params, (err, data) => {
-                    if (err) {
-                        console.log('error in SNS publish', err);
-                        logger.error('error in SNS publish');
-                        res.status(400).json({ msg: 'error' });
-                    } else {
-                        console.log('SNS publish success', data);
-                        logger.info('Request recieved!')
-                        return res.status(200).json({ msg: 'Request recieved!' });
+                                sns.publish(params, (err, data) => {
+                                    if (err) {
+                                        logger.error('error in SNS publish');
+                                        res.status(400).json({ msg: 'error in SNS publish' });
+                                    } else {
+                                        logger.info('Request recieved!')
+                                        console.log('SNS publish success', data);
+                                        return res.status(200).json({ msg: 'Request recieved!' });
+                                    }
+                                })
+                            }
+                        })
                     }
-                })
+                    else {
+                        logger.error('User doesnt have any recipes!', err);
+                        return res.status(201).json({ msg: 'User doesnt have any recipes!' });
+                    }
+
+                });
+
             }
-        })
+        });
     }
     else {
         logger.error('User unauthorized!')
