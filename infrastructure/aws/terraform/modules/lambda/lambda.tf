@@ -98,7 +98,7 @@ resource "aws_lambda_permission" "lambda_invoke_permission" {
 
 resource "aws_lambda_function" "send_email" {
   s3_bucket = "${var.AWS_LAMBDA_S3_BUCKET_NAME}"
-  s3_key = ""
+  s3_key = "lambdasendmail-9.zip"
 	function_name = "sendEmail"
 	role = "${aws_iam_role.lambda_sns_execution_role.arn}"
   handler = "index.handler"
