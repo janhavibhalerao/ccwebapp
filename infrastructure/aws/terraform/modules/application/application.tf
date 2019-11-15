@@ -286,13 +286,13 @@ resource "aws_lb_listener" "alb_listener2" {
 // WebAppTargetGroup
 resource "aws_lb_target_group" "lb_tg_webapp" {
   name     = "WebAppTargetGroup"
-  health_check {
-    interval = 10
-    timeout = 5
-    healthy_threshold = 2
-    unhealthy_threshold = 2
-    path = "/health"
-  }  
+  // health_check {
+  //   interval = 10
+  //   timeout = 5
+  //   healthy_threshold = 2
+  //   unhealthy_threshold = 2
+  //   path = "/health"
+  // }  
   deregistration_delay = 20
   port     = 3000
   protocol = "HTTP"
@@ -302,13 +302,13 @@ resource "aws_lb_target_group" "lb_tg_webapp" {
 // WAF WebAppTargetGroup2
 resource "aws_lb_target_group" "lb_tg_wafwebapp" {
   name     = "WAFWebAppTargetGroup"
-  health_check {
-    interval = 10
-    timeout = 5
-    healthy_threshold = 2
-    unhealthy_threshold = 2
-    path = "/health"
-  }  
+  // health_check {
+  //   interval = 10
+  //   timeout = 5
+  //   healthy_threshold = 2
+  //   unhealthy_threshold = 2
+  //   path = "/health"
+  // }  
   deregistration_delay = 20
   port     = 3000
   protocol = "HTTP"
@@ -341,7 +341,7 @@ resource "aws_route53_record" "dns_record" {
   alias {
     name                   = "${aws_lb.app_lb.dns_name}"
     zone_id                = "${aws_lb.app_lb.zone_id}"
-    evaluate_target_health = true
+    evaluate_target_health = false
   }
 }
 
