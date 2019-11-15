@@ -40,3 +40,41 @@ variable "AWS_DB_PASSWORD" {
     description = "Enter an master db password."
     type = string
 }
+
+variable "ec2Key" {
+    description = "EC2 key pair"
+    type = string
+}
+
+variable "CircleCIUser" {
+  description = "Enter a CircleCIUser"
+    type = string
+    default = "circleci"
+}
+
+variable "code_deploy_application_name" {
+    description = "Enter CODE_DEPLOY_APPLICATION_NAME"
+    type = string
+    default = "csye6225-webapp"
+}
+
+variable "AWS_CD_S3_BUCKET_NAME" {
+    description = "Enter a code deploy s3 bucket name. Example (codedeploy.your-domain-name.tld)"
+    type = string
+}
+
+variable "database_username" {
+    description = "Enter MYSQL User name"
+    type = string
+    default = "dbuser"
+}
+
+variable "domainName" {
+    description = "Enter your domain name"
+    type = string
+}
+
+variable "AWS_LAMBDA_S3_BUCKET_NAME" {
+    description = "Enter Lambda S3 Bucket Name"
+    type = string
+}
