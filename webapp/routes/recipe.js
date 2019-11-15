@@ -17,6 +17,7 @@ log4js.configure({
     categories: { default: { appenders: ['logs'], level: 'info' } }
 });
 const logger = log4js.getLogger('logs');
+const aws = require('aws-sdk');
 const sns = new aws.SNS();
 
 
