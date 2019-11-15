@@ -7,6 +7,11 @@ module "circleci" {
   source = "../modules/circle-ci-policy"
 }
 
+module "firewall" {
+  source = "../modules/firewall"
+  loadBalancer = "${module.application.appLoadBalancer}"
+}
+
 module "lambda" {
   source = "../modules/lambda"
   AWS_LAMBDA_S3_BUCKET_NAME = "${var.AWS_LAMBDA_S3_BUCKET_NAME}"
