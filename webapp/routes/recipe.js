@@ -226,8 +226,6 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
 router.get('/:id', (req, res) => {
     sdc.increment('GET Recipe Triggered');
     let timer = new Date();
-    let contentType = req.headers['content-type'];
-    if (contentType == 'application/json') {
         let dbtimer = new Date();
         mysql.query(`select 
         image,
@@ -266,10 +264,7 @@ router.get('/:id', (req, res) => {
 
         });
         sdc.timing('get.recipedb.time', dbtimer);
-    } else {
-        logger.error('Request type must be JSON');
-        return res.status(400).json({ msg: 'Request type must be JSON!' });
-    }
+
     sdc.timing('get.recipe.time', timer);
 });
 
