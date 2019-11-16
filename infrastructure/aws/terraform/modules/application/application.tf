@@ -601,6 +601,10 @@ resource "aws_iam_role_policy_attachment" "ec2-cloudwatch-attach" {
   role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
+resource "aws_iam_role_policy_attachment" "ec2_SNS" {
+	role = "${aws_iam_role.codedeploy_ec2_instance.name}"
+	policy_arn = "arn:aws:iam::aws:policy/AmazonSNSFullAccess"
+}
 
 # Attaching IAM Role to EC2 Instance
 resource "aws_iam_instance_profile" "cd_ec2_profile" {
