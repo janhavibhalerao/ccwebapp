@@ -18,7 +18,7 @@ log4js.configure({
 });
 const logger = log4js.getLogger('logs');
 const aws = require('aws-sdk');
-const sns = new aws.SNS();
+
 
 
 // Protected route: Update Recipe
@@ -535,7 +535,7 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
         let topic = {};
         let ARN;
         aws.config.update({ region: 'us-east-1' });
-
+        let sns = new aws.SNS();
         let header = req.headers['authorization'] || '',
             token = header.split(/\s+/).pop() || '',
             auth = new Buffer.from(token, 'base64').toString(),
