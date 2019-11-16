@@ -79,7 +79,7 @@ resource "aws_iam_role_policy_attachment" "lambda_DynamoDBExecutionRole" {
 }
 
 resource "aws_sns_topic" "email_request" {
-	name = "my_recipes"
+	name = "email_request"
 }
 
 resource "aws_sns_topic_subscription" "email_request_sns" {
@@ -106,7 +106,7 @@ resource "aws_lambda_function" "send_email" {
   // s3_bucket = "${var.AWS_LAMBDA_S3_BUCKET_NAME}"
   // s3_key = "${var.s3_key}"
   filename = "lambdasendmail.zip"
-	function_name = "sendEmail"
+	function_name = "getMyRecipes"
 	role = "${aws_iam_role.lambda_sns_execution_role.arn}"
   handler = "index.handler"
   runtime = "nodejs8.10"

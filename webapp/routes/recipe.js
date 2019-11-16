@@ -560,15 +560,17 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                                 //currently sending only 1 recipe
                                 let params = {
                                     TopicArn: ARN,
-                                    MessageStructure: 'json',
-                                    Message: JSON.stringify({
-                                        'default': 'recipe',
-                                        'email': email,
-                                        'recipeIds': result[0].id
-                                    })
+                                    Email: email,
+                                    recipeIds: result
+                                    // my_recipesMessageStructure: 'json',
+                                    // Message: JSON.stringify({
+                                    //     'default': 'recipe',
+                                    //     'email': email,
+                                    //     'recipeIds': result[0].id
+                                    // })
                                 };
-
-                                sns.publish(params, (err, data) => {
+                                    logger.info('params --- ' + params);
+                                    sns.publish(params, (err, data) => {
                                     if (err) {
                                         logger.error('error in SNS publish',err);
                                         res.status(400).json({ msg: 'error in SNS publish' });
