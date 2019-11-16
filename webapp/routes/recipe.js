@@ -563,7 +563,7 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                                     MessageStructure: 'json',
                                     Message: JSON.stringify({
                                         "default": JSON.stringify(result),
-                                        "email": email,
+                                        "email": JSON.stringify(email),
                                         "recipeIds": result[0].id
                                     })
                                 };
