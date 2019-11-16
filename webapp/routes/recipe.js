@@ -569,7 +569,7 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
 
                                 sns.publish(params, (err, data) => {
                                     if (err) {
-                                        logger.error('error in SNS publish');
+                                        logger.error('error in SNS publish',err);
                                         res.status(400).json({ msg: 'error in SNS publish' });
                                     } else {
                                         logger.info('Request recieved!')
