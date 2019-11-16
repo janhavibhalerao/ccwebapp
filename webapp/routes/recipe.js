@@ -561,11 +561,11 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                                 let params = {
                                     TopicArn: ARN,
                                     MessageStructure: 'json',
-                                    Message: {
-                                        'default': 'recipe',
-                                        'email': email,
-                                        'recipeIds': result[0].id
-                                    }
+                                    Message: JSON.stringify({
+                                        "default": email,
+                                        "email": email,
+                                        "recipeIds": result[0].id
+                                    })
                                 };
 
                                 sns.publish(params, (err, data) => {
