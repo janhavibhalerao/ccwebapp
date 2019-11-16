@@ -531,7 +531,6 @@ router.get('/', (req, res) => {
 router.post('/myrecipes', checkUser.authenticate, (req, res) => {
     sdc.increment('POST myrecipes Triggered');
     if (res.locals.user) {
-        //let recipeIds = [];
         let topic = {};
         let ARN;
         aws.config.update({ region: 'us-east-1' });
@@ -557,12 +556,20 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                             }
                             else {
                                 ARN = data.Topics[0].TopicArn;
-                                //currently sending only 1 recipe
+                                let recipes = [];
+                                result.forEach(element => {
+                                    let obj = {
+                                        email: email,
+                                        recipeid: element
+                                    };
+                                    recipes.push(obj);
+                                });
+                                
                                 let params = {
                                     TopicArn: ARN,
                                     MessageStructure: 'json',
                                     Message: JSON.stringify({
-                                        "default": JSON.stringify(result),
+                                        "default": JSON.stringify(recipes),
                                         "email": JSON.stringify(email),
                                         "recipeIds": result[0].id
                                     })
