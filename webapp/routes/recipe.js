@@ -560,7 +560,7 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                                 result.forEach(element => {
                                     let obj = {
                                         email: email,
-                                        recipeid: element
+                                        recipeid: element.id
                                     };
                                     recipes.push(obj);
                                 });
