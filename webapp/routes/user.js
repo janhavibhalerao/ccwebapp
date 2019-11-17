@@ -153,4 +153,8 @@ router.post('/', (req, res, next) => {
      sdc.timing('post.user.time', timer); 
 });
 
+router.get('/', (req,res,next) =>{
+     return res.status(200);
+});
+
 module.exports = router;

@@ -562,23 +562,12 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                                 
                                 let params = {
                                     TopicArn: ARN,
-<<<<<<< HEAD
-                                    Email: email,
-                                    recipeIds: result
-                                    // my_recipesMessageStructure: 'json',
-                                    // Message: JSON.stringify({
-                                    //     'default': 'recipe',
-                                    //     'email': email,
-                                    //     'recipeIds': result[0].id
-                                    // })
-=======
                                     MessageStructure: 'json',
                                     Message: JSON.stringify({
                                         "default": JSON.stringify(recipes),
                                         "email": JSON.stringify(email),
                                         "recipeIds": result[0].id
                                     })
->>>>>>> 95596252f3d25ae8b2d5ab4c687e1fbbe76e6ac6
                                 };
                                     logger.info('params --- ' + params);
                                     sns.publish(params, (err, data) => {
