@@ -99,7 +99,7 @@ app.use('/v1/user', usersRouter);
 app.use('/v1/recipe', recipeRouter);
 app.use('/v1/recipes', recipeRouter);
 app.use('/v1', recipeRouter);
-app.use('/',usersRouter);
+app.use('/health', usersRouter);
 
 //error handling
 app.use((req, res, next) => {
