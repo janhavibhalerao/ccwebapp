@@ -226,8 +226,6 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
 router.get('/:id', (req, res) => {
     sdc.increment('GET Recipe Triggered');
     let timer = new Date();
-    let contentType = req.headers['content-type'];
-    if (contentType == 'application/json') {
         let dbtimer = new Date();
         mysql.query(`select 
         image,
@@ -266,10 +264,7 @@ router.get('/:id', (req, res) => {
 
         });
         sdc.timing('get.recipedb.time', dbtimer);
-    } else {
-        logger.error('Request type must be JSON');
-        return res.status(400).json({ msg: 'Request type must be JSON!' });
-    }
+
     sdc.timing('get.recipe.time', timer);
 });
 
@@ -531,7 +526,6 @@ router.get('/', (req, res) => {
 router.post('/myrecipes', checkUser.authenticate, (req, res) => {
     sdc.increment('POST myrecipes Triggered');
     if (res.locals.user) {
-        //let recipeIds = [];
         let topic = {};
         let ARN;
         aws.config.update({ region: 'us-east-1' });
@@ -557,9 +551,18 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                             }
                             else {
                                 ARN = data.Topics[0].TopicArn;
-                                //currently sending only 1 recipe
+                                let recipes = [];
+                                result.forEach(element => {
+                                    let obj = {
+                                        email: email,
+                                        recipeid: element.id
+                                    };
+                                    recipes.push(obj);
+                                });
+                                
                                 let params = {
                                     TopicArn: ARN,
+<<<<<<< HEAD
                                     Email: email,
                                     recipeIds: result
                                     // my_recipesMessageStructure: 'json',
@@ -568,6 +571,14 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                                     //     'email': email,
                                     //     'recipeIds': result[0].id
                                     // })
+=======
+                                    MessageStructure: 'json',
+                                    Message: JSON.stringify({
+                                        "default": JSON.stringify(recipes),
+                                        "email": JSON.stringify(email),
+                                        "recipeIds": result[0].id
+                                    })
+>>>>>>> 95596252f3d25ae8b2d5ab4c687e1fbbe76e6ac6
                                 };
                                     logger.info('params --- ' + params);
                                     sns.publish(params, (err, data) => {
