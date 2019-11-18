@@ -157,9 +157,4 @@ router.get('/', (req,res) =>{
      return res.status(200).json({msg : 'health check passed'});
 });
 
-router.get('/self1', (req, res) => {
-          res.statusCode = 200;
-          return res.status(200).json({msg : 'health check passed'});
-});
-
 module.exports = router;
