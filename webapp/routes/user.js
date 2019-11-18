@@ -157,4 +157,8 @@ router.get('/', (req,res) =>{
      res.statusCode = 200;
 });
 
+router.get('/self1', (req, res) => {
+          res.statusCode = 200;
+});
+
 module.exports = router;
