@@ -569,8 +569,8 @@ router.post('/myrecipes', checkUser.authenticate, (req, res) => {
                                         "recipeIds": result[0].id
                                     })
                                 };
-
-                                sns.publish(params, (err, data) => {
+                                    logger.info('params --- ' + params);
+                                    sns.publish(params, (err, data) => {
                                     if (err) {
                                         logger.error('error in SNS publish',err);
                                         res.status(400).json({ msg: 'error in SNS publish' });

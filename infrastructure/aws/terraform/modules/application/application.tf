@@ -7,32 +7,33 @@ resource "aws_security_group" "application" {
     description="security group for EC2 instance"
     vpc_id="${var.aws_vpc_id}"
 
-    ingress {
-        to_port = 22
-        from_port = 22
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+    // ingress {
+    //     to_port = 22
+    //     from_port = 22
+    //     protocol = "tcp"
+    //     cidr_blocks = ["0.0.0.0/0"]
+    // }
     
-    ingress {
-        to_port = 80
-        from_port = 80
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+    // ingress {
+    //     to_port = 80
+    //     from_port = 80
+    //     protocol = "tcp"
+    //     cidr_blocks = ["0.0.0.0/0"]
+    // }
 
-    ingress {
-        to_port = 443
-        from_port = 443
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
-    }
+    // ingress {
+    //     to_port = 443
+    //     from_port = 443
+    //     protocol = "tcp"
+    //     cidr_blocks = ["0.0.0.0/0"]
+    // }
 
     ingress {
         to_port = 3000
         from_port = 3000
         protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
+        //cidr_blocks = ["0.0.0.0/0"]
+        security_groups = ["${aws_security_group.sg_loadbalancer.id}"]
     }
 
     egress {
@@ -139,7 +140,7 @@ resource "aws_autoscaling_group" "web_server_group" {
   desired_capacity          = 3
   launch_configuration      = "${aws_launch_configuration.asg-config.name}"
   vpc_zone_identifier       = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
-  target_group_arns = ["${aws_lb_target_group.lb_tg_webapp.arn}", "${aws_lb_target_group.lb_tg_wafwebapp.arn}"]
+  target_group_arns = ["${aws_lb_target_group.lb_tg_webapp.arn}"]
   tags = [
     {
       key                 = "Name"
@@ -209,15 +210,15 @@ resource "aws_lb" "app_lb" {
 }
 
 //Application without Firewall Load Balancer
-resource "aws_lb" "waf_lb" {
-  name = "wafLoadBalancer"
-  subnets = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
-  security_groups = ["${aws_security_group.sg_loadbalancer.id}"]
-  ip_address_type = "ipv4"
-  tags = {
-      Name = "wafLoadBalancer"
-    }
-}
+// resource "aws_lb" "waf_lb" {
+//   name = "wafLoadBalancer"
+//   subnets = ["${var.ec2subnet1}", "${var.ec2subnet2}", "${var.ec2subnet3}"]
+//   security_groups = ["${aws_security_group.sg_loadbalancer.id}"]
+//   ip_address_type = "ipv4"
+//   tags = {
+//       Name = "wafLoadBalancer"
+//     }
+// }
 
 // LoadBalancer Security Group
 resource "aws_security_group" "sg_loadbalancer" {
@@ -243,7 +244,7 @@ resource "aws_security_group" "sg_loadbalancer" {
         to_port = 3000
         from_port = 3000
         protocol = "tcp"
-        security_groups = ["${aws_security_group.application.id}"]
+        cidr_blocks = ["0.0.0.0/0"]
     }
     tags = {
         Name = "sg_loadbalancer"
@@ -270,17 +271,17 @@ resource "aws_lb_listener" "alb_listener1" {
 }
 
 // LoadBalancer WAF Listener
-resource "aws_lb_listener" "alb_listener2" {
-  load_balancer_arn = "${aws_lb.waf_lb.arn}"
-  port              = "443"
-  protocol          = "HTTPS"
-  certificate_arn   = "${data.aws_acm_certificate.certificate.arn}"
+// resource "aws_lb_listener" "alb_listener2" {
+//   load_balancer_arn = "${aws_lb.waf_lb.arn}"
+//   port              = "443"
+//   protocol          = "HTTPS"
+//   certificate_arn   = "${data.aws_acm_certificate.certificate.arn}"
 
-  default_action {
-    type             = "forward"
-    target_group_arn = "${aws_lb_target_group.lb_tg_wafwebapp.arn}"
-  }
-}
+//   default_action {
+//     type             = "forward"
+//     target_group_arn = "${aws_lb_target_group.lb_tg_wafwebapp.arn}"
+//   }
+// }
 
 
 // WebAppTargetGroup
@@ -300,20 +301,20 @@ resource "aws_lb_target_group" "lb_tg_webapp" {
 }
 
 // WAF WebAppTargetGroup2
-resource "aws_lb_target_group" "lb_tg_wafwebapp" {
-  name     = "WAFWebAppTargetGroup"
-  health_check {
-    interval = 10
-    timeout = 5
-    healthy_threshold = 2
-    unhealthy_threshold = 2
-    path = "/health"
-  }  
-  deregistration_delay = 20
-  port     = 3000
-  protocol = "HTTP"
-  vpc_id   = "${var.aws_vpc_id}"
-}
+// resource "aws_lb_target_group" "lb_tg_wafwebapp" {
+//   name     = "WAFWebAppTargetGroup"
+//   health_check {
+//     interval = 10
+//     timeout = 5
+//     healthy_threshold = 2
+//     unhealthy_threshold = 2
+//     path = "/health"
+//   }  
+//   deregistration_delay = 20
+//   port     = 3000
+//   protocol = "HTTP"
+//   vpc_id   = "${var.aws_vpc_id}"
+// }
 
 
 
@@ -551,30 +552,30 @@ EOF
 }
 
 #Adding IAM Policies for EC2 to access S3
-resource "aws_iam_policy" "iam_S3_access" {
-  name = "Attachments-Access-To-S3-Bucket"
-  description = "Policy for uploading attachments into S3"
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-       "s3:Get*",
-       "s3:List*",
-       "s3:Delete*",
-       "s3:Put*",
-       "s3:*"
-      ],
-      "Effect": "Allow",
-      "Resource": [
-        "arn:aws:s3:::*"
-      ]
-    }
-  ]
-}
-EOF
-}
+// resource "aws_iam_policy" "iam_S3_access" {
+//   name = "Attachments-Access-To-S3-Bucket"
+//   description = "Policy for uploading attachments into S3"
+//   policy = <<EOF
+// {
+//   "Version": "2012-10-17",
+//   "Statement": [
+//     {
+//       "Action": [
+//        "s3:Get*",
+//        "s3:List*",
+//        "s3:Delete*",
+//        "s3:Put*",
+//        "s3:*"
+//       ],
+//       "Effect": "Allow",
+//       "Resource": [
+//         "arn:aws:s3:::*"
+//       ]
+//     }
+//   ]
+// }
+// EOF
+// }
 
 
 // EC2 S3 Policy
@@ -584,17 +585,17 @@ resource "aws_iam_role_policy_attachment" "ec2-s3-attach" {
 }
 
 // EC2 role attachments S3 Policy
-resource "aws_iam_role_policy_attachment" "ec2-s3-all" {
-  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
-  policy_arn = "${aws_iam_policy.iam_S3_access.arn}"
-}
+// resource "aws_iam_role_policy_attachment" "ec2-s3-all" {
+//   role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+//   policy_arn = "${aws_iam_policy.iam_S3_access.arn}"
+// }
 
 
 // EC2 role attachments S3 Policy
-resource "aws_iam_role_policy_attachment" "ec2-rds-acccess" {
-  role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
-  policy_arn = "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
-}
+// resource "aws_iam_role_policy_attachment" "ec2-rds-acccess" {
+//   role       = "${aws_iam_role.codedeploy_ec2_instance.name}"
+//   policy_arn = "arn:aws:iam::aws:policy/AmazonRDSReadOnlyAccess"
+// }
 
 // Cloud Watch Agent Policy
 resource "aws_iam_role_policy_attachment" "ec2-cloudwatch-attach" {
