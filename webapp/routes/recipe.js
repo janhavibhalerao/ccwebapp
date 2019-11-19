@@ -10,13 +10,15 @@ const { upload, deleteFromS3, getMetaDataFromS3 } = require('../services/image')
 const singleUpload = upload.single('image');
 require('dotenv').config({ path: '/home/centos/var/.env' });
 const SDC = require('statsd-client'),
-sdc = new SDC({host: 'localhost' , port:8125});
+    sdc = new SDC({ host: 'localhost', port: 8125 });
 const log4js = require('log4js');
-	log4js.configure({
-	  appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
-	  categories: { default: { appenders: ['logs'], level: 'info' } }
-    });
+log4js.configure({
+    appenders: { logs: { type: 'file', filename: '/home/centos/webapp/logs/webapp.log' } },
+    categories: { default: { appenders: ['logs'], level: 'info' } }
+});
 const logger = log4js.getLogger('logs');
+const aws = require('aws-sdk');
+
 
 
 // Protected route: Update Recipe
@@ -26,7 +28,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
     if (res.locals.user) {
         if (req.body.author_id != null || req.body.created_ts != null || req.body.updated_ts != null
             || req.body.id != null || req.body.total_time_in_min != null) {
-            logger.error('Invalid Request body');    
+            logger.error('Invalid Request body');
             return res.status(400).json({ msg: 'Invalid Request body' });
         } else {
             let dbtimer = new Date();
@@ -108,7 +110,7 @@ router.put('/:id', checkUser.authenticate, validator.validateRecipe, (req, res) 
                                                 });
                                             }
                                         });
-                                        sdc.timing('put.recipedb.time', dbtimer);
+                                    sdc.timing('put.recipedb.time', dbtimer);
                                 }
                                 else {
                                     logger.error('Invalid Recipe Steps');
@@ -207,7 +209,7 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
                             });
                         }
                     });
-                    sdc.timing('post.recipedb.time', dbtimer);
+                sdc.timing('post.recipedb.time', dbtimer);
             } else {
                 logger.error('Invalid steps for Recipe');
                 return res.status(400).json({ msg: 'Invalid steps for Recipe' });
@@ -224,8 +226,6 @@ router.post('/', checkUser.authenticate, validator.validateRecipe, (req, res, ne
 router.get('/:id', (req, res) => {
     sdc.increment('GET Recipe Triggered');
     let timer = new Date();
-    let contentType = req.headers['content-type'];
-    if (contentType == 'application/json') {
         let dbtimer = new Date();
         mysql.query(`select 
         image,
@@ -264,10 +264,7 @@ router.get('/:id', (req, res) => {
 
         });
         sdc.timing('get.recipedb.time', dbtimer);
-    } else {
-        logger.error('Request type must be JSON');
-        return res.status(400).json({ msg: 'Request type must be JSON!' });
-    }
+
     sdc.timing('get.recipe.time', timer);
 });
 
@@ -348,7 +345,7 @@ router.post('/:id/image', checkUser.authenticate, function (req, res, next) {
                         } else {
                             if (req.file == null) {
                                 logger.error('Invalid Request Body');
-                                return res.status(400).json({ msg: 'Invalid Request body'});
+                                return res.status(400).json({ msg: 'Invalid Request body' });
                             } else {
                                 let image = {
                                     'id': uuid(),
@@ -523,6 +520,83 @@ router.get('/', (req, res) => {
         return res.status(400).json({ msg: 'Request type must be JSON!' });
     }
     sdc.timing('Get.NewestRecipe.time', timer);
+});
+
+//Protected Route:Request link to all of my recipes
+router.post('/myrecipes', checkUser.authenticate, (req, res) => {
+    sdc.increment('POST myrecipes Triggered');
+    if (res.locals.user) {
+        let topic = {};
+        let ARN;
+        aws.config.update({ region: 'us-east-1' });
+        let sns = new aws.SNS();
+        let header = req.headers['authorization'] || '',
+            token = header.split(/\s+/).pop() || '',
+            auth = new Buffer.from(token, 'base64').toString(),
+            parts = auth.split(/:/),
+            email = parts[0];
+
+        mysql.query(`select id from User where email_address=(?)`, [email], (err, data) => {
+            if (err) {
+                logger.error('Failed to get author_id from email!', err);
+                return res.status(400).json({ msg: 'Failed to get author_id from email!' });
+            }
+            else {
+                mysql.query(`select id from Recipe where author_id=(?)`, [data[0].id], (err, result) => {
+                    if (result != null) {
+                        sns.listTopics(topic, (err, data) => {
+                            if (err) {
+                                logger.error('err in sns listTopics', err);
+                                res.status(400).json({ msg: 'err in sns listTopics' });
+                            }
+                            else {
+                                ARN = data.Topics[0].TopicArn;
+                                let recipes = [];
+                                result.forEach(element => {
+                                    let obj = {
+                                        email: email,
+                                        recipeid: element.id
+                                    };
+                                    recipes.push(obj);
+                                });
+                                
+                                let params = {
+                                    TopicArn: ARN,
+                                    MessageStructure: 'json',
+                                    Message: JSON.stringify({
+                                        "default": JSON.stringify(recipes),
+                                        "email": JSON.stringify(email),
+                                        "recipeIds": result[0].id
+                                    })
+                                };
+                                    logger.info('params --- ' + params);
+                                    sns.publish(params, (err, data) => {
+                                    if (err) {
+                                        logger.error('error in SNS publish',err);
+                                        res.status(400).json({ msg: 'error in SNS publish' });
+                                    } else {
+                                        logger.info('Request recieved!')
+                                        console.log('SNS publish success', data);
+                                        return res.status(200).json({ msg: 'Request recieved!' });
+                                    }
+                                })
+                            }
+                        })
+                    }
+                    else {
+                        logger.error('User doesnt have any recipes!', err);
+                        return res.status(201).json({ msg: 'User doesnt have any recipes!' });
+                    }
+
+                });
+
+            }
+        });
+    }
+    else {
+        logger.error('User unauthorized!')
+        return res.status(401).json({ msg: 'User unauthorized!' });
+    }
 });
 
 module.exports = router;    

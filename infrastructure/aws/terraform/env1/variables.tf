@@ -52,10 +52,6 @@ variable "CircleCIUser" {
     default = "circleci"
 }
 
-variable "aws_account_id" {
-    description = "Enter AWS_ACCOUNT_ID"
-    type = string
-}
 variable "code_deploy_application_name" {
     description = "Enter CODE_DEPLOY_APPLICATION_NAME"
     type = string
@@ -71,4 +67,14 @@ variable "database_username" {
     description = "Enter MYSQL User name"
     type = string
     default = "dbuser"
+}
+
+variable "domainName" {
+    description = "Enter your domain name"
+    type = string
+}
+
+variable "AWS_LAMBDA_S3_BUCKET_NAME" {
+    description = "Enter Lambda S3 Bucket Name"
+    type = string
 }

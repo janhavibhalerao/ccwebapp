@@ -40,7 +40,7 @@ resource "aws_db_subnet_group" "subnet-group" {
   subnet_ids = ["${aws_subnet.subnet1.id}", "${aws_subnet.subnet2.id}", "${aws_subnet.subnet3.id}"]
 
   tags = {
-    Name = "My DB subnet group"
+    Name = "csye6225_db_sg"
   }
 }
 
@@ -79,9 +79,18 @@ output "vpc_id" {
   value = "${aws_vpc.main.id}"
 }
 
-output "subnet_id" {
+output "subnet_id1" {
   value = "${aws_subnet.subnet1.id}"
 }
+
+output "subnet_id2" {
+  value = "${aws_subnet.subnet2.id}"
+}
+
+output "subnet_id3" {
+  value = "${aws_subnet.subnet3.id}"
+}
+
 
 output "subnet_group" {
   value = "${aws_db_subnet_group.subnet-group.id}"

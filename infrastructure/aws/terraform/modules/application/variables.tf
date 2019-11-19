@@ -6,8 +6,6 @@ variable "aws_vpc_id" {}
 
 variable "aws_subnet_group" {}
 
-variable "ec2subnet" {}
-
 variable "AWS_S3_BUCKET_NAME" {
     description = "Enter a s3 bucket name for image. Example (webapp.your-domain-name.tld)"
     type = string
@@ -38,10 +36,7 @@ variable "aws_region" {
     type = string
     default = "us-east-1"
 }
-variable "aws_account_id" {
-    description = "Enter AWS_ACCOUNT_ID"
-    type = string
-}
+
 variable "code_deploy_application_name" {
     description = "Enter CODE_DEPLOY_APPLICATION_NAME"
     type = string
@@ -53,3 +48,25 @@ variable "database_username" {
     type = string
     default = "dbuser"
 }
+
+variable "cd_appName" {
+    description = "Enter the app name for code deploy"
+    type = string
+    default = "csye6225-ec2"
+}
+
+variable "domainName" {
+    description = "Enter your domain name"
+    type = string
+}
+
+variable "AWS_LAMBDA_S3_BUCKET_NAME" {
+    description = "Enter Lambda S3 Bucket Name"
+    type = string
+}
+
+variable "ec2subnet1" {}
+
+variable "ec2subnet2" {}
+
+variable "ec2subnet3" {}

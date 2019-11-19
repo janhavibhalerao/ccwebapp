@@ -52,3 +52,29 @@ resource "aws_iam_user_policy_attachment" "circleci-ec2-ami-attach" {
   user       = "${var.CircleCIUser}"
   policy_arn = "${aws_iam_policy.circleci-ec2-ami_policy.arn}"
 }
+
+resource "aws_iam_policy" "circleci-lambda_policy" {
+  name        = "circleci-lambda"
+  description = "Policy which allows circleci user to access lambda"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "lambda:*",
+                "s3:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy_attachment" "circleci-lambda-attach" {
+  user       = "${var.CircleCIUser}"
+  policy_arn = "${aws_iam_policy.circleci-lambda_policy.arn}"
+}
