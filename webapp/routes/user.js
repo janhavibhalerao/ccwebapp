@@ -153,4 +153,8 @@ router.post('/', (req, res, next) => {
      sdc.timing('post.user.time', timer); 
 });
 
+router.get('/', (req,res) =>{
+     return res.status(200).json({msg : 'health check passed'});
+});
+
 module.exports = router;
